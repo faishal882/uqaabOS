@@ -25,3 +25,9 @@
           * Various other key states (shift, alt, control, etc)
           * Various "toggle" states (CapsLock, ScrollLock, NumberLock, etc)
 
+
+************* GLOBAL DESCRIPTION TABLE(GDT) *****************
+-> Segment, Segment Selector, and Segment Descriptor
+-> Segment Selector: A reference to a descriptor, which you can load into a segment register; the selector is an offset into a descriptor table pointing to one of its entries.
+                    These entries are typically 8 bytes long, therefore bits 3 and up only declare the descriptor table entry offset, while bit 2 specifies if this selector is a GDT or LDT selector 
+                    (LDT - bit set, GDT - bit cleared), and bits 0 - 1 declare the ring level that needs to correspond to the descriptor table entry's DPL field
