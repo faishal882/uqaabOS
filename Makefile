@@ -11,7 +11,7 @@ ISO_DIR=iso
 KERNEL=$(BUILD_DIR)/kernel.bin
 
 # Compiler and linker flags
-CFLAGS=-std=gnu99 -ffreestanding -O2 -Wall -Wextra
+CFLAGS=-std=gnu99 -ffreestanding -O2 -Wall -Wextra -g
 LDFLAGS=-T linker.ld -nostdlib
 
 # All target
