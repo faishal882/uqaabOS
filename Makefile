@@ -1,5 +1,5 @@
 # Cross-compiler tools
-CC=i686-elf-gcc
+CC=i686-elf-g++
 LD=i686-elf-ld
 AS=i686-elf-as
 GRUB_MKRESCUE=grub-mkrescue
@@ -24,7 +24,7 @@ $(BUILD_DIR)/multiboot.o: $(SRC_DIR)/multiboot.asm
 # $(CC) $(CFLAGS) -c $< -o $@
 
 # Compile kernel.c to object file
-$(BUILD_DIR)/kernel.o: $(SRC_DIR)/kernel.c
+$(BUILD_DIR)/kernel.o: $(SRC_DIR)/kernel.cpp
 	mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
