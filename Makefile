@@ -8,11 +8,11 @@ GRUB_MKRESCUE=grub-mkrescue
 SRC_DIR=src
 BUILD_DIR=build
 ISO_DIR=iso
-KERNEL=$(BUILD_DIR)/kernel.bin
+# KERNEL=$(BUILD_DIR)/kernel.bin
 
 # Compiler and linker flags
-CFLAGS=-std=gnu99 -ffreestanding -O2 -Wall -Wextra -g
-LDFLAGS=-T linker.ld -nostdlib
+CFLAGS=-std=gnu99 -g -ffreestanding -O2 -Wall -Wextra 
+LDFLAGS=-T linker.ld -nostdlib   
 
 # All target
 all: $(KERNEL) iso
@@ -30,13 +30,13 @@ $(BUILD_DIR)/kernel.o: $(SRC_DIR)/kernel.c
 
 
 # Link kernel binary
-$(KERNEL): $(BUILD_DIR)/kernel.o $(BUILD_DIR)/multiboot.o
+$(BUILD_DIR)/kernel.bin: $(BUILD_DIR)/kernel.o $(BUILD_DIR)/multiboot.o
 	$(LD) $(LDFLAGS) -o $@ $^
 
 # Create ISO image
-iso: $(KERNEL)
+iso: $(BUILD_DIR)/kernel.bin
 	mkdir -p $(ISO_DIR)/boot/grub
-	cp $(KERNEL) $(ISO_DIR)/boot/
+	cp $(BUILD_DIR)/kernel.bin $(ISO_DIR)/boot/
 	cp $(ISO_DIR)/boot/grub.cfg $(ISO_DIR)/boot/grub/
 	$(GRUB_MKRESCUE) -o $(BUILD_DIR)/uqaabOS.iso $(ISO_DIR)
 
