@@ -28,9 +28,13 @@ $(BUILD_DIR)/kernel.o: $(SRC_DIR)/kernel.cpp
 	mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
+# Compile gdt.cpp to object file
+$(BUILD_DIR)/gdt.o: $(SRC_DIR)/include/gdt.cpp
+	mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
 
 # Link kernel binary
-$(BUILD_DIR)/kernel.bin: $(BUILD_DIR)/kernel.o $(BUILD_DIR)/multiboot.o
+$(BUILD_DIR)/kernel.bin: $(BUILD_DIR)/kernel.o $(BUILD_DIR)/multiboot.o $(BUILD_DIR)/gdt.o
 	$(LD) $(LDFLAGS) -o $@ $^
 
 # Create ISO image
