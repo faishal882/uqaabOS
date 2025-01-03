@@ -66,7 +66,7 @@ uint32_t uqaabOS::include::GDTDescriptor::Base() {
 }
 
 // combine all the limit in 20bits
-uint32_t uqaabOS::include::GDTDescriptor::Limit() {
+uint32_t uqaabOS::include::GDTDescriptor::limit() {
 
   // The target pointer is used to representation of the SegmentDescriptor
   // object.
@@ -87,25 +87,22 @@ uint32_t uqaabOS::include::GDTDescriptor::Limit() {
   return limitResult;
 }
 
-// get limit of GDTPointer
-uint32_t uqaabOS::include::GDTPointer::getLimit() { return limit; }
-
-// get base of GDTPointer
-uint32_t uqaabOS::include::GDTPointer::getBase() { return base; }
-
 // GDTPointer destructor
 uqaabOS::include::GDTPointer::~GDTPointer() {}
 
 // initialize necessary descriptor
 void uqaabOS::include::init_gdt() {
+  uqaabOS::include::GDTDescriptor gdt_entries[4];
+  uqaabOS::include::GDTPointer firstGdt;
 
+  // initialize all the descriptors
   gdt_entries[NULL_DESCRIPTOR].setGDTSegment(0, 0, 0);
   gdt_entries[UNUSED_DESCRIPTOR].setGDTSegment(0, 0, 0);
   gdt_entries[CODE_DESCRIPTOR].setGDTSegment(0, 64 * 1024 * 1024, 0x9A);
   gdt_entries[DATA_DESCRIPTOR].setGDTSegment(0, 64 * 1024 * 1024, 0x92);
 
-  firstGdt.limit = sizeof(gdt_entries) - 1;
-  firstGdt.base = (uint32_t)&gdt_entries;
+  firstGdt.limit = (sizeof(GDTDescriptor) * 4) - 1;
+  firstGdt.base = (uint32_t *)&gdt_entries;
 
   // load_gdt start implemenattion is in load_gdt.s file
   load_gdt(&firstGdt);

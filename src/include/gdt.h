@@ -1,7 +1,7 @@
 #ifndef __GDT_H
 #define __GDT_H
 
-#include <stdint.h>
+#include "libc/types.h"
 
 namespace uqaabOS {
 namespace include {
@@ -13,9 +13,9 @@ namespace include {
 
 // points to the location of gdt , limit:
 class GDTPointer {
-private:
+public:
   uint32_t limit;
-  uint32_t base;
+  uint32_t *base;
 
 public:
   GDTPointer();

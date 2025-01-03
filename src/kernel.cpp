@@ -1,6 +1,6 @@
 // GCC provides these header files automatically
-#include <stddef.h>
-#include <stdint.h>
+// #include <stddef.h>
+// #include <stdint.h>
 
 #include "include/gdt.h"
 
