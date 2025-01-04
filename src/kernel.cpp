@@ -12,7 +12,8 @@
 #endif
 
 // VGA handling class
-class VGATerminal {
+class VGATerminal
+{
 private:
   static constexpr int VGA_COLS = 80;
   static constexpr int VGA_ROWS = 25;
@@ -32,9 +33,12 @@ public:
   }
 
   // Initialize the terminal
-  void init() {
-    for (int col = 0; col < VGA_COLS; ++col) {
-      for (int row = 0; row < VGA_ROWS; ++row) {
+  void init()
+  {
+    for (int col = 0; col < VGA_COLS; ++col)
+    {
+      for (int row = 0; row < VGA_ROWS; ++row)
+      {
         const size_t index = (VGA_COLS * row) + col;
         vga_buffer[index] = static_cast<uint16_t>(term_color << 8) | ' ';
       }
@@ -42,8 +46,10 @@ public:
   }
 
   // Put a single character on the screen
-  void putChar(char c) {
-    switch (c) {
+  void putChar(char c)
+  {
+    switch (c)
+    {
     case '\n':
       term_col = 0;
       ++term_row;
@@ -57,28 +63,33 @@ public:
     }
 
     // Handle column overflow
-    if (term_col >= VGA_COLS) {
+    if (term_col >= VGA_COLS)
+    {
       term_col = 0;
       ++term_row;
     }
 
     // Handle row overflow
-    if (term_row >= VGA_ROWS) {
+    if (term_row >= VGA_ROWS)
+    {
       term_col = 0;
       term_row = 0;
     }
   }
 
   // Print a string
-  void print(const char *str) {
-    for (size_t i = 0; str[i] != '\0'; ++i) {
+  void print(const char *str)
+  {
+    for (size_t i = 0; str[i] != '\0'; ++i)
+    {
       putChar(str[i]);
     }
   }
 };
 
 // Kernel entry point
-extern "C" void kernel_main() {
+extern "C" void kernel_main()
+{
   // Create our terminal instance
   VGATerminal terminal;
 
