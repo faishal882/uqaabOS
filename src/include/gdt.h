@@ -1,54 +1,58 @@
 #ifndef __GDT_H
 #define __GDT_H
 
-#include "libc/types.h"
+#include <stdint.h>
 
-namespace uqaabOS {
-namespace include {
+namespace uqaabOS
+{
+  namespace include
+  {
 
-#define NULL_DESCRIPTOR 0
-#define UNUSED_DESCRIPTOR 1
-#define CODE_DESCRIPTOR 2
-#define DATA_DESCRIPTOR 3
+    // segment of global descriptor table
+    class GDTDescriptor
+    {
+      /*  **** GDT Descriptor ****
+         -> limit: low_limit(0-15bytes) + granularity(48-51bytes)(low 4bits of
+                   granualirity),
+         -> base: low_base(16-31bytes) + mid_base(32-39bytes) +
+                  high_base(56-63bytes),
+         -> access: access(40-47bytes),
+         -> flags: granularity(52-55bytes)(high 4bits of granualirity),
+         */
+    private:
+      uint16_t low_limit;
+      uint16_t low_base;
+      uint8_t mid_base;
+      uint8_t access;
+      uint8_t granularity; // high 4 bits (flags) low 4 bits (limit)
+      uint8_t high_base;
 
-// points to the location of gdt , limit:
-class GDTPointer {
-public:
-  uint32_t limit;
-  uint32_t *base;
+    public:
+      GDTDescriptor();
+      GDTDescriptor(uint32_t base, uint32_t limit, uint8_t access);
+      ~GDTDescriptor();
 
-public:
-  GDTPointer();
-  ~GDTPointer();
+      uint32_t segment_base();
+      uint32_t segment_limit();
+    } __attribute__((packed));
 
-  uint32_t getLimit();
-  uint32_t getBase();
-} __attribute__((packed));
+    // global descriptor table(GDT)
+    class GDT
+    {
+    private:
+      // four GDTSegmentDescriptor necessary for basic kernel
+      GDTDescriptor null_segment;
+      GDTDescriptor unused_segment;
+      GDTDescriptor code_segment;
+      GDTDescriptor data_segment;
 
-// segment of global descriptor table
-class GDTDescriptor {
-private:
-  uint16_t low_limit;
-  uint16_t low_base;
-  uint8_t mid_base;
-  uint8_t access;
-  uint8_t granularity; // high 4 bits (flags) low 4 bits (limit 4 last
-                       // bits)(limit is 20 bit wide)
-  uint8_t high_base;
+    public:
+      GDT();
+      ~GDT();
 
-public:
-  GDTDescriptor();
-  ~GDTDescriptor();
-
-  uint32_t Base();
-  uint32_t limit();
-  void setGDTSegment(uint32_t base, uint32_t limit, uint8_t access);
-
-} __attribute__((packed));
-
-extern void init_gdt();
-
-} // namespace include
+      uint16_t code_segment_selector();
+      uint16_t data_segment_selector();
+    } __attribute__((packed));
+  } // namespace include
 } // namespace uqaabOS
-
 #endif
