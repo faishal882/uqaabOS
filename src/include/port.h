@@ -1,3 +1,6 @@
+#ifndef __PORT_H
+#define __PORT_H
+
 #include <stdint.h>
 
 namespace uqaabOS
@@ -110,5 +113,6 @@ namespace uqaabOS
                 __asm__ volatile("outl %0, %1" : : "a"(data), "Nd" (port));
             }
         };
-    }
-}
+    }// namespace include
+}// namespace uqaabOS
+#endif
