@@ -3,6 +3,13 @@
 namespace uqaabOS {
 namespace interrupts {
 
+/* 0x00-0xFF(255): Entries in the IDT
+   -> Trap Gate(0x00-0x1F): CPU Exceptions (Faults, Traps),
+   -> Interrupt Gate(0x20-0x2F): IRQ 0–15 (Hardware Interrupts),
+   -> Task Gate(0x30-0xFF): Reserved / Custom Software Interrupts
+ */
+static struct GateDescriptor idt_entries[256]; // IDT entries
+
 // set gate descriptor (set the interrupt table entry)
 void InterruptManager::setGateDescriptor(uint8_t interrupt,
                                          uint16_t code_seg_selector_offset,
@@ -11,7 +18,7 @@ void InterruptManager::setGateDescriptor(uint8_t interrupt,
                                          uint8_t desc_type) {
   // set ISR(Interrupt Service Routine)
   idt_entries[interrupt].low_offset = ((uint32_t)handler) & 0xFFFF;
-  idt_entries[interrupt].high_offset = (((uint32_t)handler)) >> 16) & 0xFFFF;
+  idt_entries[interrupt].high_offset = (((uint32_t)handler) >> 16) & 0xFFFF;
 
   // set code segment of the ISR
   idt_entries[interrupt].code_seg_selector = code_seg_selector_offset;
@@ -155,7 +162,7 @@ void InterruptManager::deactivate() {
 }
 
 // Generic ISR handler
-uint32_t InterruptManager::handle_interrupt(uint8_t interrupt, uint32_t esp) {
+extern "C" uint32_t handle_interrupt(uint8_t interrupt, uint32_t esp) {
   char foo[] = "INTERRUPT 0x00";
   char hex[] = "0123456789ABCDEF";
   foo[12] = hex[(interrupt >> 4) & 0xF];

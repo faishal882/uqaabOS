@@ -1,5 +1,6 @@
 // GCC provides these header files automatically
 #include "include/gdt.h"
+#include "include/interrupts_f.h"
 #include "include/libc/stdio.h"
 
 // Compiler checks
@@ -22,6 +23,12 @@ extern "C" void kernel_main() {
   uqaabOS::include::GDT gdt;
 
   terminal.print("Loaded GDT....\n");
+
+  // Initialize Interrupts
+  uqaabOS::interrupts::InterruptManager interrupts(0x20, &gdt);
+  interrupts.activate();
+
+  terminal.print("Loaded Interrupts....\n");
   terminal.print("Running......");
 
   while (1)

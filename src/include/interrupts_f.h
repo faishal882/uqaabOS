@@ -10,6 +10,57 @@
 namespace uqaabOS {
 namespace interrupts {
 
+extern "C" {
+// Interrupt Requests(eg: 0x00: Programmable interrupt timer Interrupt
+// , 0x01: keyboard interrupt etc)
+static void IRQ0x00();
+static void IRQ0x01();
+static void IRQ0x02();
+static void IRQ0x03();
+static void IRQ0x04();
+static void IRQ0x05();
+static void IRQ0x06();
+static void IRQ0x07();
+static void IRQ0x08();
+static void IRQ0x09();
+static void IRQ0x0A();
+static void IRQ0x0B();
+static void IRQ0x0C();
+static void IRQ0x0D();
+static void IRQ0x0E();
+static void IRQ0x0F();
+static void IRQ0x31();
+
+// Exceptions(eg: 0x00: Divide error Interrupt, 0x01: Debug Interrupt,
+// , 0x06: Invalid Opcode Interrupt etc)
+static void handle_exception0x00();
+static void handle_exception0x01();
+static void handle_exception0x02();
+static void handle_exception0x03();
+static void handle_exception0x04();
+static void handle_exception0x05();
+static void handle_exception0x06();
+static void handle_exception0x07();
+static void handle_exception0x08();
+static void handle_exception0x09();
+static void handle_exception0x0A();
+static void handle_exception0x0B();
+static void handle_exception0x0C();
+static void handle_exception0x0D();
+static void handle_exception0x0E();
+static void handle_exception0x0F();
+static void handle_exception0x10();
+static void handle_exception0x11();
+static void handle_exception0x12();
+static void handle_exception0x13();
+
+// a generic ISR(interrupt service routine) handler
+uint32_t handle_interrupt(uint8_t interrupt_number, uint32_t esp);
+
+// dummy ISR for unused interrupts.
+static void interrupt_ignore();
+}
+
 /*  **** Gate Descriptor(Interrupt Table Entry) ****
    -> low_offset(0-15bits): Lower 16 bits of the ISR address
    -> code_seg_selector(16-31bits): Selector of the code segment
@@ -37,13 +88,13 @@ struct IDTPointer {
 } __attribute__((packed));
 
 class InterruptManager {
-protected:
+public:
   /* 0x00-0xFF(255): Entries in the IDT
      -> Trap Gate(0x00-0x1F): CPU Exceptions (Faults, Traps),
      -> Interrupt Gate(0x20-0x2F): IRQ 0–15 (Hardware Interrupts),
      -> Task Gate(0x30-0xFF): Reserved / Custom Software Interrupts
    */
-  static struct GateDescriptor idt_entries[256]; // IDT entries
+  // static struct GateDescriptor idt_entries[256]; // IDT entries
 
   // set gate descriptor (set the interrupt table entry)
   static void setGateDescriptor(uint8_t interrupt,
@@ -51,59 +102,10 @@ protected:
                                 void (*handler)(), uint8_t desc_privilege_level,
                                 uint8_t desc_type);
 
-  // dummy ISR for unused interrupts.
-  static void interrupt_ignore();
-
   // hardware interrupt offset(for resolving conflict with CPU exceptions in
   // IDT, i.e: PIC maps IRQs 0–15 to IDT entries 0x08–0x0F conflict with CPU
   // exceptions, eg: IRQ0x00->0x08 Original IDT entry->Remapped entry 0x20 etc)
   uint16_t hardware_interrupt_offset;
-
-  // Interrupt Requests(eg: 0x00: Programmable interrupt timer Interrupt
-  // , 0x01: keyboard interrupt etc)
-  static void IRQ0x00();
-  static void IRQ0x01();
-  static void IRQ0x02();
-  static void IRQ0x03();
-  static void IRQ0x04();
-  static void IRQ0x05();
-  static void IRQ0x06();
-  static void IRQ0x07();
-  static void IRQ0x08();
-  static void IRQ0x09();
-  static void IRQ0x0A();
-  static void IRQ0x0B();
-  static void IRQ0x0C();
-  static void IRQ0x0D();
-  static void IRQ0x0E();
-  static void IRQ0x0F();
-  static void IRQ0x31();
-
-  // Exceptions(eg: 0x00: Divide error Interrupt, 0x01: Debug Interrupt,
-  // , 0x06: Invalid Opcode Interrupt etc)
-  static void handle_exception0x00();
-  static void handle_exception0x01();
-  static void handle_exception0x02();
-  static void handle_exception0x03();
-  static void handle_exception0x04();
-  static void handle_exception0x05();
-  static void handle_exception0x06();
-  static void handle_exception0x07();
-  static void handle_exception0x08();
-  static void handle_exception0x09();
-  static void handle_exception0x0A();
-  static void handle_exception0x0B();
-  static void handle_exception0x0C();
-  static void handle_exception0x0D();
-  static void handle_exception0x0E();
-  static void handle_exception0x0F();
-  static void handle_exception0x10();
-  static void handle_exception0x11();
-  static void handle_exception0x12();
-  static void handle_exception0x13();
-
-  // a generic ISR(interrupt service routine) handler
-  uint32_t handle_interrupt(uint8_t interrupt_number, uint32_t esp);
 
   // Controls Intel 8259 PIC,routes hardware interrupts to CPU.
   // master-Programmable Interrupt Controller command port: 0x0020,
