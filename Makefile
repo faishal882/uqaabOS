@@ -11,7 +11,7 @@ ISO_DIR=iso
 # KERNEL=$(BUILD_DIR)/kernel.bin
 
 # Compiler and linker flags
-CFLAGS=-std=gnu99 -g -ffreestanding -O2 -Wall -Wextra 
+CFLAGS = -g -ffreestanding -fno-exceptions -fno-rtti -nostdlib -nostartfiles -nodefaultlibs
 LDFLAGS=-T linker.ld -nostdlib   
 
 # All target
@@ -23,17 +23,21 @@ $(BUILD_DIR)/multiboot.o: $(SRC_DIR)/multiboot.asm
 	nasm -f elf32 src/multiboot.asm -o build/multiboot.o
 # $(CC) $(CFLAGS) -c $< -o $@
 
-# Compile kernel.c to object file
+# Compile kernel.cpp to object file
 $(BUILD_DIR)/kernel.o: $(SRC_DIR)/kernel.cpp
 	mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Compile gdt.c to object file
+# Compile stdio.cpp to object file
+$(BUILD_DIR)/stdio.o: $(SRC_DIR)/libc/stdio.cpp
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Compile gdt.cpp to object file
 $(BUILD_DIR)/gdt.o: $(SRC_DIR)/core/gdt.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Link kernel binary
-$(BUILD_DIR)/kernel.bin: $(BUILD_DIR)/kernel.o $(BUILD_DIR)/gdt.o $(BUILD_DIR)/multiboot.o
+$(BUILD_DIR)/kernel.bin: $(BUILD_DIR)/kernel.o $(BUILD_DIR)/stdio.o $(BUILD_DIR)/gdt.o $(BUILD_DIR)/multiboot.o
 	$(LD) $(LDFLAGS) -o $@ $^
 
 # Create ISO image

@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "gdt.h"
+#include "libc/stdio.h"
 #include "port.h"
 
 namespace uqaabOS {
