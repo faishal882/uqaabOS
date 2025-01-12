@@ -10,7 +10,7 @@ section .text
 %macro HandleException 1
 global handle_exception%1
 handle_exception%1:
-    push byte %1
+    mov dword [interrupt_number], %1 
     jmp int_bottom
 %endmacro
 
@@ -18,7 +18,7 @@ handle_exception%1:
 %macro HandleInterruptRequest 1
 global IRQ%1
 IRQ%1:
-    push byte (%1 + IRQ_BASE)
+    mov dword [interrupt_number], (%1 + IRQ_BASE) ;push byte (%1 + IRQ_BASE)
     jmp int_bottom
 %endmacro
 
@@ -72,6 +72,7 @@ int_bottom:
     push gs
     
     push esp
+    push dword [interrupt_number]
     call handle_interrupt   ; Call the C-style handler function
     add esp, 8
     mov esp, eax
@@ -90,4 +91,4 @@ interrupt_ignore:
     iret
 
 section .data
-    interrupt_number: db 0
+    interrupt_number: dd 0
