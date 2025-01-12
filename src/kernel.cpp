@@ -1,4 +1,6 @@
 // GCC provides these header files automatically
+#include "include/drivers/keyboard.h"
+#include "include/drivers/mouse.h"
 #include "include/gdt.h"
 #include "include/interrupts.h"
 #include "include/libc/stdio.h"
@@ -20,11 +22,9 @@ extern "C" void kernel_main() {
 
   // Initialize Interrupts
   uqaabOS::interrupts::InterruptManager interrupts(0x20, &gdt);
+  uqaabOS::driver::MouseDriver mouse(&interrupts);
+  uqaabOS::driver::KeyboardDriver keyboard(&interrupts);
   interrupts.activate();
-
-  uqaabOS::libc::printf("Loaded Interrupts....\n");
-  uqaabOS::libc::printf("Running.....");
-  // terminal.print("Running......");
 
   while (1)
     ;

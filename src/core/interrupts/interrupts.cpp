@@ -197,7 +197,7 @@ extern "C" uint32_t handle_interrupt(uint8_t interrupt_number, uint32_t esp) {
   // foo[12] = hex[(interrupt >> 4) & 0xF];
   // foo[13] = hex[interrupt & 0xF];
 
-  uqaabOS::libc::printf("interrupt occur");
+  // uqaabOS::libc::printf("interrupt occur");
   if (uqaabOS::interrupts::InterruptManager::ActiveInterrruptManager != 0) {
     uqaabOS::interrupts::InterruptManager::ActiveInterrruptManager
         ->do_handle_interrupt(interrupt_number, esp);
