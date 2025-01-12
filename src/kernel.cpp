@@ -23,6 +23,7 @@ extern "C" void kernel_main() {
   interrupts.activate();
 
   uqaabOS::libc::printf("Loaded Interrupts....\n");
+  uqaabOS::libc::printf("Running.....");
   // terminal.print("Running......");
 
   while (1)
