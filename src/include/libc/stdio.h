@@ -1,31 +1,16 @@
 #ifndef STDIO_H
 #define STDIO_H
 
-#include <stddef.h>
+#include <stdarg.h>
 #include <stdint.h>
 
 namespace uqaabOS {
 namespace libc {
-class Terminal {
-public:
-  static const int VGA_COLS = 80;
-  static const int VGA_ROWS = 25;
-
-private:
-  volatile uint16_t *vga_buffer;
-  int term_col;
-  int term_row;
-  uint8_t term_color;
-
-public:
-  Terminal();
-  ~Terminal();
-
-  void putChar(char c);      // Print a single character
-  void print(const char *s); // Print a string
-  void clear();              // Clear the screen
-};
+void printf(const char *format, ...);
+void putchar(char c);
+void puts(const char *str);
+void print_int(int num);
+void print_hex(uint32_t num);
 } // namespace libc
 } // namespace uqaabOS
-
-#endif
+#endif // PRINTF_H
