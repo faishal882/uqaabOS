@@ -1,6 +1,6 @@
 // GCC provides these header files automatically
 #include "include/gdt.h"
-#include "include/interrupts_f.h"
+#include "include/interrupts.h"
 #include "include/libc/stdio.h"
 
 // Compiler checks
@@ -12,24 +12,18 @@
 
 // Kernel entry point
 extern "C" void kernel_main() {
-  // Create our terminal instance
-  uqaabOS::libc::Terminal terminal;
-
-  // Display some messages
-  terminal.print("Hello, World!\n");
-  terminal.print("Welcome to the C++ kernel.\n");
+  uqaabOS::libc::printf("Hello, World!\n");
 
   // Initialize Global Descriptor Table in kernel
   uqaabOS::include::GDT gdt;
-
-  terminal.print("Loaded GDT....\n");
+  uqaabOS::libc::printf("Loaded GDT....\n");
 
   // Initialize Interrupts
   uqaabOS::interrupts::InterruptManager interrupts(0x20, &gdt);
   interrupts.activate();
 
-  terminal.print("Loaded Interrupts....\n");
-  terminal.print("Running......");
+  uqaabOS::libc::printf("Loaded Interrupts....\n");
+  // terminal.print("Running......");
 
   while (1)
     ;

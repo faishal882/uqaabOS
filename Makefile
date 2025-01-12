@@ -23,7 +23,7 @@ $(BUILD_DIR)/multiboot.o: $(SRC_DIR)/multiboot.asm
 	nasm -f elf32 $< -o $@
 
 # compile interruptstub.asm to interruptstub.o
-$(BUILD_DIR)/interruptstub.o: $(SRC_DIR)/core/interrupts/interruptstub_f.asm
+$(BUILD_DIR)/interruptstub.o: $(SRC_DIR)/core/interrupts/interruptstub.asm
 	nasm -f elf32 $< -o $@
 
 # Compile kernel.cpp to object file
@@ -40,7 +40,7 @@ $(BUILD_DIR)/gdt.o: $(SRC_DIR)/core/gdt.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Compile interrupts.cpp to object file
-$(BUILD_DIR)/interrupts.o: $(SRC_DIR)/core/interrupts/interrupts_n.cpp
+$(BUILD_DIR)/interrupts.o: $(SRC_DIR)/core/interrupts/interrupts.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/port.o: $(SRC_DIR)/core/port.cpp 

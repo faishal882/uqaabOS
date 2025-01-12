@@ -1,4 +1,4 @@
-#include "../../include/interrupts_f.h"
+#include "../../include/interrupts.h"
 
 namespace uqaabOS {
 namespace interrupts {

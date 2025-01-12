@@ -2,76 +2,92 @@
 
 namespace uqaabOS {
 namespace libc {
+// VGA text buffer address
+volatile char *video = (volatile char *)0xB8000;
+static int cursor_pos = 0;
 
-// Constructor
-Terminal::Terminal()
-    : vga_buffer(reinterpret_cast<uint16_t *>(0xB8000)), term_col(0),
-      term_row(0), term_color(0x0F) // Black background, White foreground
-{
-  clear();
+void putchar(char c) {
+  if (c == '\n') {
+    cursor_pos += 80 - (cursor_pos % 80);
+  } else {
+    video[cursor_pos * 2] = c;
+    video[cursor_pos * 2 + 1] = 0x07;
+    cursor_pos++;
+  }
 }
 
-// Clear the screen
-void Terminal::clear() {
-  for (int row = 0; row < VGA_ROWS; ++row) {
-    for (int col = 0; col < VGA_COLS; ++col) {
-      const size_t index = (VGA_COLS * row) + col;
-      vga_buffer[index] = static_cast<uint16_t>(term_color << 8) | ' ';
-    }
+void puts(const char *str) {
+  while (*str) {
+    putchar(*str++);
   }
-  term_col = 0;
-  term_row = 0;
 }
 
-// Print a single character
-void Terminal::putChar(char c) {
-  switch (c) {
-  case '\n':
-    term_col = 0;
-    ++term_row;
-    break;
-  default:
-    const size_t index = (VGA_COLS * term_row) + term_col;
-    vga_buffer[index] = static_cast<uint16_t>(term_color << 8) | c;
-    ++term_col;
-    break;
+void print_int(int num) {
+  char buffer[16];
+  int i = 0;
+  if (num < 0) {
+    putchar('-');
+    num = -num;
   }
+  do {
+    buffer[i++] = '0' + (num % 10);
+    num /= 10;
+  } while (num > 0);
 
-  // Handle column overflow
-  if (term_col >= VGA_COLS) {
-    term_col = 0;
-    ++term_row;
+  while (i > 0) {
+    putchar(buffer[--i]);
   }
+}
 
-  // Handle row overflow by scrolling
-  if (term_row >= VGA_ROWS) {
-    term_row = VGA_ROWS - 1;
-    for (int row = 0; row < VGA_ROWS - 1; ++row) {
-      for (int col = 0; col < VGA_COLS; ++col) {
-        const size_t index = (VGA_COLS * row) + col;
-        const size_t next_index = (VGA_COLS * (row + 1)) + col;
-        vga_buffer[index] = vga_buffer[next_index];
+void print_hex(uint32_t num) {
+  char buffer[16];
+  int i = 0;
+  puts("0x");
+  do {
+    int digit = num % 16;
+    buffer[i++] = (digit < 10) ? ('0' + digit) : ('A' + (digit - 10));
+    num /= 16;
+  } while (num > 0);
+
+  while (i > 0) {
+    putchar(buffer[--i]);
+  }
+}
+
+void printf(const char *format, ...) {
+  va_list args;
+  va_start(args, format);
+
+  while (*format) {
+    if (*format == '%') {
+      format++;
+      switch (*format) {
+      case 's':
+        puts(va_arg(args, char *));
+        break;
+      case 'd':
+        print_int(va_arg(args, int));
+        break;
+      case 'x':
+        print_hex(va_arg(args, uint32_t));
+        break;
+      case 'c':
+        putchar((char)va_arg(args, int));
+        break;
+      case '%':
+        putchar('%');
+        break;
+      default:
+        putchar('?');
+        break;
       }
+    } else {
+      putchar(*format);
     }
-    // Clear the last row
-    for (int col = 0; col < VGA_COLS; ++col) {
-      const size_t index = (VGA_COLS * (VGA_ROWS - 1)) + col;
-      vga_buffer[index] = static_cast<uint16_t>(term_color << 8) | ' ';
-    }
+    format++;
   }
-}
 
-// Print a string
-void Terminal::print(const char *s) {
-  for (size_t i = 0; s[i] != '\0'; ++i) {
-    putChar(s[i]);
-  }
+  va_end(args);
 }
-
-// Destructor
-Terminal::~Terminal() {
-  // do nothing
-}
-
 } // namespace libc
 } // namespace uqaabOS
