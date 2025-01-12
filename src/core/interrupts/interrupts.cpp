@@ -1,4 +1,5 @@
 #include "../../include/interrupts.h"
+#include "../../include/libc/stdio.h"
 
 namespace uqaabOS {
 namespace interrupts {
@@ -168,8 +169,8 @@ extern "C" uint32_t handle_interrupt(uint8_t interrupt, uint32_t esp) {
   foo[12] = hex[(interrupt >> 4) & 0xF];
   foo[13] = hex[interrupt & 0xF];
 
-  uqaabOS::libc::Terminal terminal;
-  terminal.print(foo);
+  uqaabOS::libc::printf(foo);
+
   return esp;
 }
 
