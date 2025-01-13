@@ -26,6 +26,8 @@ extern "C" void kernel_main() {
   uqaabOS::driver::KeyboardDriver keyboard(&interrupts);
   interrupts.activate();
 
+  // should raise a divide by zero exception
+  uqaabOS::libc::print_int(10 / 0);
   while (1)
     ;
 }

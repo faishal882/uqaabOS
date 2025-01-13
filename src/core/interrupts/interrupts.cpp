@@ -192,12 +192,6 @@ void InterruptManager::deactivate() {
 
 // Generic ISR handler
 extern "C" uint32_t handle_interrupt(uint8_t interrupt_number, uint32_t esp) {
-  // char foo[] = "INTERRUPT 0x00";
-  // char hex[] = "0123456789ABCDEF";
-  // foo[12] = hex[(interrupt >> 4) & 0xF];
-  // foo[13] = hex[interrupt & 0xF];
-
-  // uqaabOS::libc::printf("interrupt occur");
   if (uqaabOS::interrupts::InterruptManager::ActiveInterrruptManager != 0) {
     uqaabOS::interrupts::InterruptManager::ActiveInterrruptManager
         ->do_handle_interrupt(interrupt_number, esp);
@@ -206,17 +200,40 @@ extern "C" uint32_t handle_interrupt(uint8_t interrupt_number, uint32_t esp) {
   return esp;
 }
 
+// Exception messages
+const char *exception_messages[] = {"Divide By Zero Exception\n",
+                                    "Debug Exception\n",
+                                    "Non Maskable Interrupt Exception\n",
+                                    "Breakpoint Exception\n",
+                                    "Overflow Exception\n",
+                                    "Bound Range Exceeded Exception\n",
+                                    "Invalid Opcode Exception\n",
+                                    "Device Not Available Exception\n",
+                                    "Double Fault Exception\n",
+                                    "Coprocessor Segment Overrun Exception\n",
+                                    "Invalid TSS Exception\n",
+                                    "Segment Not Present Exception\n",
+                                    "Stack Fault Exception\n",
+                                    "General Protection Fault Exception\n",
+                                    "Page Fault Exception\n",
+                                    "Unknown Interrupt Exception\n",
+                                    "Coprocessor Fault Exception\n",
+                                    "Alignment Check Exception\n",
+                                    "Machine Check Exception\n",
+                                    "Reserved Exception\n",
+                                    "Reserved Exception\n"};
+
 uint32_t InterruptManager::do_handle_interrupt(uint8_t interrupt_number,
                                                uint32_t esp) {
   if (handlers[interrupt_number] != 0) {
     esp = handlers[interrupt_number]->handle_interrupt(esp);
   } else if (interrupt_number != hardware_interrupt_offset) {
-    char foo[] = "UNHANDLED INTERRUPT 0x00";
-    char hex[] = "0123456789ABCDEF";
-    foo[22] = hex[(interrupt_number >> 4) & 0xF];
-    foo[23] = hex[interrupt_number & 0xF];
-
-    uqaabOS::libc::printf(foo);
+    if (interrupt_number <
+        sizeof(exception_messages) / sizeof(exception_messages[0])) {
+      libc::printf("EXCEPTION: %s", exception_messages[interrupt_number]);
+    } else {
+      libc::printf("UNHANDLED INTERRUPT 0x%02X\n", interrupt_number);
+    }
   }
 
   if (hardware_interrupt_offset <= interrupt_number &&
