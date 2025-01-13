@@ -2,6 +2,7 @@
 #include "include/gdt.h"
 #include "include/interrupts.h"
 #include "include/libc/stdio.h"
+#include "include/keyboard/keyboard.h"
 
 // Compiler checks
 #if defined(__linux__)
@@ -24,7 +25,10 @@ extern "C" void kernel_main() {
 
   uqaabOS::libc::printf("Loaded Interrupts....\n");
   uqaabOS::libc::printf("Running.....");
+
+  uqaabOS::keyboard::KeyBoardDriver keyboard_driver(&interrupts);
   // terminal.print("Running......");
+
 
   while (1)
     ;
