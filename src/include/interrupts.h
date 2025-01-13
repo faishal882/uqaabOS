@@ -63,19 +63,17 @@ static void interrupt_ignore();
 
 class InterruptManager;
 
-class InterruptHandler{
+class InterruptHandler {
+protected:
+  uint8_t interrupt_number;
+  InterruptManager *interrupt_manager;
 
-  protected:
-
-  uint8_t InterruptNumber;
-  InterruptManager* interruptManager;
-
-  InterruptHandler(InterruptManager *interruptManager , uint8_t InterruptNumber);
+  InterruptHandler(InterruptManager *interrupt_manager,
+                   uint8_t interrupt_number);
   ~InterruptHandler();
 
-  public:
-    virtual uint32_t HandleInterrupt(uint32_t esp);
-
+public:
+  virtual uint32_t handle_interrupt(uint32_t esp);
 };
 
 /*  **** Gate Descriptor(Interrupt Table Entry) ****
@@ -105,10 +103,10 @@ struct IDTPointer {
 } __attribute__((packed));
 
 class InterruptManager {
-// protected:
+  // protected:
 public:
-  static InterruptManager* ActiveInterrruptManager;
-  // InterruptHandler* handlers[256];
+  static InterruptManager *ActiveInterrruptManager;
+  InterruptHandler *handlers[256];
 
   friend class InterruptHandler;
 
@@ -149,8 +147,7 @@ public:
   void activate();   // activate the interrupts
   void deactivate(); // deactivate the interrupts
 
-  uint32_t do_handle_interrupt(uint8_t interrupt , uint32_t esp);
-
+  uint32_t do_handle_interrupt(uint8_t interrupt_number, uint32_t esp);
 };
 } // namespace interrupts
 } // namespace uqaabOS
