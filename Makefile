@@ -50,10 +50,17 @@ $(BUILD_DIR)/keyboard.o: $(SRC_DIR)/keyboard/keyboard.cpp
 $(BUILD_DIR)/port.o: $(SRC_DIR)/core/port.cpp 
 	$(CC) $(CFLAGS) -c $< -o $@
 
+$(BUILD_DIR)/keyboard.o: $(SRC_DIR)/drivers/keyboard.cpp 
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/mouse.o: $(SRC_DIR)/drivers/mouse.cpp 
+	$(CC) $(CFLAGS) -c $< -o $@
+
 # Link kernel binary
-$(BUILD_DIR)/kernel.bin: $(BUILD_DIR)/kernel.o $(BUILD_DIR)/stdio.o             \
-													$(BUILD_DIR)/interrupts.o $(BUILD_DIR)/interruptstub.o $(BUILD_DIR)/port.o $(BUILD_DIR)/keyboard.o\
-	                       $(BUILD_DIR)/gdt.o $(BUILD_DIR)/multiboot.o
+$(BUILD_DIR)/kernel.bin: $(BUILD_DIR)/kernel.o $(BUILD_DIR)/multiboot.o             \
+	                       $(BUILD_DIR)/gdt.o $(BUILD_DIR)/stdio.o                     \
+												 $(BUILD_DIR)/interrupts.o $(BUILD_DIR)/interruptstub.o $(BUILD_DIR)/port.o \
+												 $(BUILD_DIR)/keyboard.o $(BUILD_DIR)/mouse.o
 	$(LD) $(LDFLAGS) -o $@ $^
 
 # Create ISO image
