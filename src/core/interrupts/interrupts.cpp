@@ -8,26 +8,26 @@ namespace uqaabOS
 
     InterruptManager* InterruptManager::ActiveInterrruptManager = 0;
 
-    InterruptHandler::InterruptHandler(InterruptManager *interruptManager, uint8_t InterruptNumber)
-    {
-      this->interruptManager = interruptManager;
-      this->InterruptNumber = InterruptNumber;
-      interruptManager->handlers[InterruptNumber] = this;
-    }
+    // InterruptHandler::InterruptHandler(InterruptManager *interruptManager, uint8_t InterruptNumber)
+    // {
+    //   this->interruptManager = interruptManager;
+    //   this->InterruptNumber = InterruptNumber;
+    //   interruptManager->handlers[InterruptNumber] = this;
+    // }
 
-    InterruptHandler::~InterruptHandler()
-    {
+    // InterruptHandler::~InterruptHandler()
+    // {
 
-      if (interruptManager->handlers[InterruptNumber] != 0)
-      {
-        interruptManager->handlers[InterruptNumber] = 0;
-      }
-    }
+    //   if (interruptManager->handlers[InterruptNumber] != 0)
+    //   {
+    //     interruptManager->handlers[InterruptNumber] = 0;
+    //   }
+    // }
 
-    uint32_t InterruptHandler::HandleInterrupt(uint32_t esp)
-    {
-      return esp;
-    }
+    // uint32_t InterruptHandler::HandleInterrupt(uint32_t esp)
+    // {
+    //   return esp;
+    // }
 
     /* 0x00-0xFF(255): Entries in the IDT
        -> Trap Gate(0x00-0x1F): CPU Exceptions (Faults, Traps),
@@ -73,10 +73,10 @@ namespace uqaabOS
       {
         setGateDescriptor(i, code_segment, &interrupt_ignore, 0,
                           IDT_INTERRUPT_GATE);
-        handlers[i] = 0;
+        // handlers[i] = 0;
       }
       setGateDescriptor(0, code_segment, &interrupt_ignore, 0, IDT_INTERRUPT_GATE);
-      handlers[0] = 0;
+      // handlers[0] = 0;
 
       // hardware interrupts, Interrupt Gate
       setGateDescriptor(hardware_interrupt_offset + 0x00, code_segment, &IRQ0x00, 0,
@@ -216,8 +216,9 @@ namespace uqaabOS
 
       uqaabOS::libc::printf("interrupt occur");
       if(uqaabOS::interrupts::InterruptManager::ActiveInterrruptManager != 0){
-        uqaabOS::interrupts::InterruptManager::ActiveInterrruptManager -> do_handle_interrupt(interrupt , esp);
+        return uqaabOS::interrupts::InterruptManager::ActiveInterrruptManager -> do_handle_interrupt(interrupt , esp);
       }
+
 
       
       return esp;
@@ -226,30 +227,40 @@ namespace uqaabOS
     uint32_t InterruptManager::do_handle_interrupt(uint8_t interrupt, uint32_t esp)
     {
   
-      if (handlers[interrupt] != 0)
-      {
-        esp = handlers[interrupt]->HandleInterrupt(esp);
-      }
-      else if (interrupt != hardware_interrupt_offset)
-      {
-        char foo[] = "UNHANDLED INTERRUPT 0x00";
-        char hex[] = "0123456789ABCDEF";
-        foo[22] = hex[(interrupt >> 4) & 0xF];
-        foo[23] = hex[interrupt & 0xF];
+      // if (handlers[interrupt] != 0)
+      // {
+      //   esp = handlers[interrupt]->HandleInterrupt(esp);
+      // }
+      // else if (interrupt != hardware_interrupt_offset)
+      // {
+      //   char foo[] = "UNHANDLED INTERRUPT 0x00";
+      //   char hex[] = "0123456789ABCDEF";
+      //   foo[22] = hex[(interrupt >> 4) & 0xF];
+      //   foo[23] = hex[interrupt & 0xF];
 
-        uqaabOS::libc::printf(foo);
-      }
+      //   uqaabOS::libc::printf(foo);
+      // }
 
-      if(hardware_interrupt_offset <= interrupt && interrupt < hardware_interrupt_offset + 16){
+      // if(hardware_interrupt_offset <= interrupt && interrupt < hardware_interrupt_offset + 16){
         
+      //   PIC_master_command_port.write(0x20);
+      //   if(hardware_interrupt_offset + 8 <= interrupt){
+      //     PIC_slave_command_port.write(0x20);
+      //   }
+
+      // }
+
+      uqaabOS::libc::printf("HELLO");
+
+      if(0x20 <= interrupt  && interrupt < 0x30){
         PIC_master_command_port.write(0x20);
-        if(hardware_interrupt_offset + 8 <= interrupt){
+        if(0x28 <= interrupt){
           PIC_slave_command_port.write(0x20);
         }
-
       }
 
       return esp;
+    
     }
 
   } // namespace interrupts

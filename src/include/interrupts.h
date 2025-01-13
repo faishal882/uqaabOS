@@ -108,7 +108,7 @@ class InterruptManager {
 // protected:
 public:
   static InterruptManager* ActiveInterrruptManager;
-  InterruptHandler* handlers[256];
+  // InterruptHandler* handlers[256];
 
   friend class InterruptHandler;
 
