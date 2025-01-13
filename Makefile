@@ -44,8 +44,8 @@ $(BUILD_DIR)/gdt.o: $(SRC_DIR)/core/gdt.cpp
 $(BUILD_DIR)/interrupts.o: $(SRC_DIR)/core/interrupts/interrupts.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/keyboard.o: $(SRC_DIR)/keyboard/keyboard.cpp
-	$(CC) $(CFLAGS) -c $< -o $@
+# $(BUILD_DIR)/keyboard.o: $(SRC_DIR)/keyboard/keyboard.cpp
+# 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/port.o: $(SRC_DIR)/core/port.cpp 
 	$(CC) $(CFLAGS) -c $< -o $@
