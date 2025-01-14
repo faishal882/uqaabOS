@@ -8,21 +8,36 @@ namespace uqaabOS
 
     namespace driver
     {
+
+        KeyboardEventHandler::KeyboardEventHandler()
+        {
+        }
+        void KeyboardEventHandler::on_key_down(char)
+        {
+        }
+        void KeyboardEventHandler::on_key_up(char)
+        {
+        }
         /*
           -> 0x21 is the IRQ (Interrupt Request Line) for the keyboard.
           -> data_port to 0x60, I/O port used to communicate with the keyboard for reading and writing data.
           -> command_port 0x64, I/O port for sending commands to the keyboard controller and reading its status.
         */
 
-        KeyboardDriver::KeyboardDriver(interrupts::InterruptManager *manager)
+        KeyboardDriver::KeyboardDriver(interrupts::InterruptManager *manager, KeyboardEventHandler *handler)
             : interrupts::InterruptHandler(manager, 0x21),
               data_port(0x60),
               command_port(0x64)
         {
 
+            this->handler = handler;
+        }
+
+        void KeyboardDriver::activate()
+        {
             /*keyboard controller may have pending data in its input buffer (status register bit 0 set to 1).
-            -> status register via the command_port the input buffer is full
-            */
+           -> status register via the command_port the input buffer is full
+           */
             while (command_port.read() & 0x1)
                 data_port.read();
             // read to clear the buffer,
@@ -57,140 +72,137 @@ namespace uqaabOS
                 switch (key)
                 {
                 case 0x02:
-                    libc::printf("1");
+                    handler ->  on_key_down('1');
                     break;
                 case 0x03:
-                    libc::printf("2");
+                    handler ->  on_key_down('2');
                     break;
                 case 0x04:
-                    libc::printf("3");
+                    handler ->  on_key_down('3');
                     break;
                 case 0x05:
-                    libc::printf("4");
+                    handler ->  on_key_down('4');
                     break;
                 case 0x06:
-                    libc::printf("5");
+                    handler ->  on_key_down('5');
                     break;
                 case 0x07:
-                    libc::printf("6");
+                    handler ->  on_key_down('6');
                     break;
                 case 0x08:
-                    libc::printf("7");
+                    handler ->  on_key_down('7');
                     break;
                 case 0x09:
-                    libc::printf("8");
+                    handler ->  on_key_down('8');
                     break;
                 case 0x0A:
-                    libc::printf("9");
+                    handler ->  on_key_down('9');
                     break;
                 case 0x0B:
-                    libc::printf("0");
+                    handler ->  on_key_down('0');
                     break;
 
                 case 0x10:
-                    libc::printf("q");
+                    handler ->  on_key_down('q');
                     break;
                 case 0x11:
-                    libc::printf("w");
+                    handler ->  on_key_down('w');
                     break;
                 case 0x12:
-                    libc::printf("e");
+                    handler ->  on_key_down('e');
                     break;
                 case 0x13:
-                    libc::printf("r");
+                    handler ->  on_key_down('r');
                     break;
                 case 0x14:
-                    libc::printf("t");
+                    handler ->  on_key_down('t');
                     break;
                 case 0x15:
-                    libc::printf("z");
+                    handler ->  on_key_down('z');
                     break;
                 case 0x16:
-                    libc::printf("u");
+                    handler ->  on_key_down('u');
                     break;
                 case 0x17:
-                    libc::printf("i");
+                    handler ->  on_key_down('i');
                     break;
                 case 0x18:
-                    libc::printf("o");
+                    handler ->  on_key_down('o');
                     break;
                 case 0x19:
-                    libc::printf("p");
+                    handler ->  on_key_down('p');
                     break;
 
                 case 0x1E:
-                    libc::printf("a");
+                    handler ->  on_key_down('a');
                     break;
                 case 0x1F:
-                    libc::printf("s");
+                    handler ->  on_key_down('s');
                     break;
                 case 0x20:
-                    libc::printf("d");
+                   handler ->  on_key_down('d');
                     break;
                 case 0x21:
-                    libc::printf("f");
+                    handler ->  on_key_down('f');
                     break;
                 case 0x22:
-                    libc::printf("g");
+                    handler ->  on_key_down('g');
                     break;
                 case 0x23:
-                    libc::printf("h");
+                    handler ->  on_key_down('h');
                     break;
                 case 0x24:
-                    libc::printf("j");
+                    handler ->  on_key_down('j');
                     break;
                 case 0x25:
-                    libc::printf("k");
+                    handler ->  on_key_down('k');
                     break;
                 case 0x26:
-                    libc::printf("l");
+                    handler ->  on_key_down('l');
                     break;
 
                 case 0x2C:
-                    libc::printf("y");
+                    handler ->  on_key_down('y');
                     break;
                 case 0x2D:
-                    libc::printf("x");
+                   handler ->  on_key_down('x');
                     break;
                 case 0x2E:
-                    libc::printf("c");
+                    handler ->  on_key_down('c');
                     break;
                 case 0x2F:
-                    libc::printf("v");
+                    handler ->  on_key_down('v');
                     break;
                 case 0x30:
-                    libc::printf("b");
+                    handler ->  on_key_down('b');
                     break;
                 case 0x31:
-                    libc::printf("n");
+                    handler ->  on_key_down('n');
                     break;
                 case 0x32:
-                    libc::printf("m");
+                    handler ->  on_key_down('m');
                     break;
                 case 0x33:
-                    libc::printf(",");
+                    handler ->  on_key_down(',');
                     break;
                 case 0x34:
-                    libc::printf(".");
+                    handler ->  on_key_down('.');
                     break;
                 case 0x35:
-                    libc::printf("-");
+                    handler ->  on_key_down('-');
                     break;
 
                 case 0x1C:
-                    libc::printf("\n");
+                    handler ->  on_key_down('\n');
                     break;
                 case 0x39:
-                    libc::printf(" ");
+                    handler ->  on_key_down(' ');
                     break;
 
                 default:
                 {
-                    char *foo = "KEYBOARD 0x00 ";
-                    char *hex = "0123456789ABCDEF";
-                    foo[11] = hex[(key >> 4) & 0xF];
-                    foo[12] = hex[key & 0xF];
-                    libc::printf(foo);
+                    libc::printf("KEYBOARD 0x");
+                    libc::print_hex(key);
                     break;
                 }
                 }

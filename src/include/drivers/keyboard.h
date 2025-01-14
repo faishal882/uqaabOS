@@ -6,13 +6,26 @@
 #include "../interrupts.h"
 #include "../libc/stdio.h"
 #include "../port.h"
+#include "driver.h"
 
 namespace uqaabOS
 {
 
     namespace driver
     {
-        class KeyboardDriver : public interrupts::InterruptHandler
+
+
+        class KeyboardEventHandler{
+
+            public:
+
+            KeyboardEventHandler();
+            virtual void on_key_down(char);
+            virtual void on_key_up(char);
+        };
+        
+        
+        class KeyboardDriver : public interrupts::InterruptHandler , public Driver
         {
         private:
             /*
@@ -28,10 +41,14 @@ namespace uqaabOS
             */
             include::Port8Bit command_port;
 
+            KeyboardEventHandler* handler;
+            
+
         public:
-            KeyboardDriver(interrupts::InterruptManager *manager);
+            KeyboardDriver(interrupts::InterruptManager *manager , KeyboardEventHandler * handler);
             ~KeyboardDriver();
             virtual uint32_t  handle_interrupt(uint32_t esp);
+            virtual void activate();
         };
 
     }

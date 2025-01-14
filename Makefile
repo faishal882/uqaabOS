@@ -56,6 +56,9 @@ $(BUILD_DIR)/keyboard.o: $(SRC_DIR)/drivers/keyboard.cpp
 $(BUILD_DIR)/mouse.o: $(SRC_DIR)/drivers/mouse.cpp 
 	$(CC) $(CFLAGS) -c $< -o $@
 
+$(BUILD_DIR)/driver.o: $(SRC_DIR)/drivers/driver.cpp 
+	$(CC) $(CFLAGS) -c $< -o $@
+
 # Link kernel binary
 $(BUILD_DIR)/kernel.bin: $(BUILD_DIR)/kernel.o $(BUILD_DIR)/multiboot.o             \
 	                       $(BUILD_DIR)/gdt.o $(BUILD_DIR)/stdio.o                     \

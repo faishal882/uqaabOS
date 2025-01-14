@@ -11,9 +11,14 @@ section .text
 %macro HandleExceptionWithError 1 
 global handle_exception%1                   ; Make the handler visible to linker
 handle_exception%1:
+<<<<<<< HEAD
     push dword [esp]                       ; Save the CPU-pushed error code
     mov dword [interrupt_number], %1        ; Store the exception number in global variable
     jmp int_bottom                         ; Jump to common handler code
+=======
+    mov dword [interrupt_number], %1
+    jmp int_bottom
+>>>>>>> 218f785 (merged)
 %endmacro
 
 ; Macro for handling exceptions that don't push error codes
@@ -28,8 +33,13 @@ handle_exception%1:
 %macro HandleInterruptRequest 1 
 global IRQ%1                               ; Make the IRQ handler visible to linker
 IRQ%1:
+<<<<<<< HEAD
     mov dword [interrupt_number], (%1 + IRQ_BASE)  ; Store IRQ number offset by base
     jmp int_bottom                         ; Jump to common handler code
+=======
+    mov dword [interrupt_number], %1 + IRQ_BASE
+    jmp int_bottom
+>>>>>>> 218f785 (merged)
 %endmacro
 
 ; Generate handlers for all standard x86 exceptions
