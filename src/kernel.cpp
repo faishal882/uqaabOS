@@ -4,6 +4,9 @@
 #include "include/gdt.h"
 #include "include/interrupts.h"
 #include "include/libc/stdio.h"
+#include "include/drivers/driver.h"
+
+// #include "include/keyboard/keyboard.h"
 
 // Compiler checks
 #if defined(__linux__)
@@ -11,6 +14,15 @@
 #elif !defined(__i386__)
 #error "This code must be compiled with an x86-elf compiler"
 #endif
+
+class PrintfKeyboardEventHandler : public uqaabOS::driver::KeyboardEventHandler{
+  public:
+  void on_key_down(char c){
+    char foo[] = " ";
+    foo[0] = c;
+    uqaabOS::libc::printf(foo);
+  }
+};
 
 // Kernel entry point
 extern "C" void kernel_main() {
@@ -23,7 +35,23 @@ extern "C" void kernel_main() {
   // Initialize Interrupts
   uqaabOS::interrupts::InterruptManager interrupts(0x20, &gdt);
   uqaabOS::driver::MouseDriver mouse(&interrupts);
-  uqaabOS::driver::KeyboardDriver keyboard(&interrupts);
+  
+  uqaabOS::driver::DriverManager driver_manager;
+  PrintfKeyboardEventHandler keyboard_event_driver;
+
+  uqaabOS::driver::KeyboardDriver keyboard(&interrupts , &keyboard_event_driver);
+  driver_manager.add_driver(&keyboard);
+
+
+  driver_manager.activate_all();
+
+
+  
+
+  // driver_manager.add_driver(&keyboard);
+  // driver_manager.add_driver(&mouse);
+
+  
   interrupts.activate();
 
   // should raise a divide by zero exception

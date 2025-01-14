@@ -25,6 +25,7 @@ $(BUILD_DIR)/multiboot.o: $(SRC_DIR)/multiboot.asm
 # compile interruptstub.asm to interruptstub.o
 $(BUILD_DIR)/interruptstub.o: $(SRC_DIR)/core/interrupts/interruptstub.asm
 	nasm -f elf32 $< -o $@
+	
 
 # Compile kernel.cpp to object file
 $(BUILD_DIR)/kernel.o: $(SRC_DIR)/kernel.cpp
@@ -43,6 +44,9 @@ $(BUILD_DIR)/gdt.o: $(SRC_DIR)/core/gdt.cpp
 $(BUILD_DIR)/interrupts.o: $(SRC_DIR)/core/interrupts/interrupts.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
+# $(BUILD_DIR)/keyboard.o: $(SRC_DIR)/keyboard/keyboard.cpp
+# 	$(CC) $(CFLAGS) -c $< -o $@
+
 $(BUILD_DIR)/port.o: $(SRC_DIR)/core/port.cpp 
 	$(CC) $(CFLAGS) -c $< -o $@
 
@@ -50,6 +54,9 @@ $(BUILD_DIR)/keyboard.o: $(SRC_DIR)/drivers/keyboard.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/mouse.o: $(SRC_DIR)/drivers/mouse.cpp 
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/driver.o: $(SRC_DIR)/drivers/driver.cpp 
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Link kernel binary
