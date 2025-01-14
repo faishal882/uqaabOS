@@ -8,49 +8,43 @@
 #include "../port.h"
 #include "driver.h"
 
-namespace uqaabOS
-{
+namespace uqaabOS {
 
-    namespace driver
-    {
+namespace driver {
 
+class KeyboardEventHandler {
 
-        class KeyboardEventHandler{
+public:
+  KeyboardEventHandler();
+  virtual void on_key_down(char);
+  virtual void on_key_up(char);
+};
 
-            public:
+class KeyboardDriver : public interrupts::InterruptHandler, public Driver {
+private:
+  /*
+   -> keyboard use 8 bit registers for communication
+  */
+  /*data port is used to Read data from the keyboard */
+  include::Port8Bit data_port;
 
-            KeyboardEventHandler();
-            virtual void on_key_down(char);
-            virtual void on_key_up(char);
-        };
-        
-        
-        class KeyboardDriver : public interrupts::InterruptHandler , public Driver
-        {
-        private:
-            /*
-             -> keyboard use 8 bit registers for communication
-            */
-            /*data port is used to Read data from the keyboard */
-            include::Port8Bit data_port;
+  /*send commands to the keyboard controller or read its status.
+  -> 0xFF: Reset the keyboard.
+  -> 0xF0: Set scancode set.
+  -> 0xFA: Acknowledge (command was successful)
+  */
+  include::Port8Bit command_port;
 
-            /*send commands to the keyboard controller or read its status.
-            -> 0xFF: Reset the keyboard.
-            -> 0xF0: Set scancode set.
-            -> 0xFA: Acknowledge (command was successful)
-            */
-            include::Port8Bit command_port;
+  KeyboardEventHandler *handler;
 
-            KeyboardEventHandler* handler;
-            
+public:
+  KeyboardDriver(interrupts::InterruptManager *manager,
+                 KeyboardEventHandler *handler);
+  ~KeyboardDriver();
+  virtual uint32_t handle_interrupt(uint32_t esp);
+  virtual void activate();
+};
 
-        public:
-            KeyboardDriver(interrupts::InterruptManager *manager , KeyboardEventHandler * handler);
-            ~KeyboardDriver();
-            virtual uint32_t  handle_interrupt(uint32_t esp);
-            virtual void activate();
-        };
-
-    }
-}
+} // namespace driver
+} // namespace uqaabOS
 #endif
