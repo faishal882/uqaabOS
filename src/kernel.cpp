@@ -5,6 +5,7 @@
 #include "include/gdt.h"
 #include "include/interrupts.h"
 #include "include/libc/stdio.h"
+#include "include/drivers/pci.h"
 
 // #include "include/keyboard/keyboard.h"
 
@@ -43,9 +44,12 @@ extern "C" void kernel_main() {
   uqaabOS::driver::KeyboardDriver keyboard(&interrupts, &keyboard_event_driver);
   driver_manager.add_driver(&keyboard);
 
+  uqaabOS::driver::PCIController pci_controller;
+  pci_controller.select_drivers(&driver_manager);
+
   driver_manager.activate_all();
 
-  driver_manager.add_driver(&keyboard);
+  // driver_manager.add_driver(&keyboard);
   // driver_manager.add_driver(&mouse);
 
   interrupts.activate();
