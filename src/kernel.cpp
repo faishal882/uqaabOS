@@ -2,10 +2,11 @@
 #include "include/drivers/driver.h"
 #include "include/drivers/keyboard.h"
 #include "include/drivers/mouse.h"
+#include "include/drivers/pci.h"
+#include "include/drivers/vga.h"
 #include "include/gdt.h"
 #include "include/interrupts.h"
 #include "include/libc/stdio.h"
-#include "include/drivers/pci.h"
 
 // #include "include/keyboard/keyboard.h"
 
@@ -88,6 +89,8 @@ extern "C" void kernel_main() {
   uqaabOS::driver::PCIController pci_controller;
   pci_controller.select_drivers(&driver_manager);
 
+  uqaabOS::driver::VideoGraphicsArray vga;
+
   driver_manager.activate_all();
 
   // driver_manager.add_driver(&keyboard);
@@ -97,6 +100,11 @@ extern "C" void kernel_main() {
 
   // should raise a divide by zero exception
   uqaabOS::libc::print_int(10 / 1);
+
+  vga.set_mode(320, 200, 8);
+  for (int32_t y = 0; y < 200; y++)
+    for (int32_t x = 0; x < 320; x++)
+      vga.put_pixel(x, y, 0x00, 0x00, 0xA8);
   while (1)
     ;
 }
