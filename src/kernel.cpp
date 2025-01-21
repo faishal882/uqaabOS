@@ -104,7 +104,7 @@ extern "C" void kernel_main() {
   vga.set_mode(320, 200, 8);
   for (int32_t y = 0; y < 200; y++)
     for (int32_t x = 0; x < 320; x++)
-      vga.put_pixel(x, y, 0x00, 0x00, 0xA8);
+      vga.put_pixel(x, y, 0x00, 0xFF, 0x00);
   while (1)
     ;
 }

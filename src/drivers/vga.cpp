@@ -197,10 +197,14 @@ void VideoGraphicsArray::put_pixel(uint32_t x, uint32_t y, uint8_t colorIndex) {
 
 // Convert RGB values to a color index (currently very limited color support)
 uint8_t VideoGraphicsArray::get_color_index(uint8_t r, uint8_t g, uint8_t b) {
-  // Currently only supports blue (returns 1) or black (returns 0)
-  if (r == 0x00, g == 0x00, b == 0xA8)
-    return 0x01;
-  return 0x00;
+  // index standard 16-color VGA palette
+  if (r == 0xFF && g == 0x00 && b == 0x00)
+    return 0x04; // Red color index
+  if (r == 0x00 && g == 0xFF && b == 0x00)
+    return 0x02; // Green color index
+  if (r == 0x00 && g == 0x00 && b == 0xFF)
+    return 0x01; // Blue color index
+  return 0x00;   // Black color index
 }
 
 // Write a pixel to the screen using RGB values
