@@ -61,6 +61,21 @@ uint32_t handle_interrupt(uint8_t interrupt_number, uint32_t esp);
 static void interrupt_ignore();
 }
 
+class InterruptManager;
+
+class InterruptHandler {
+protected:
+  uint8_t interrupt_number;
+  InterruptManager *interrupt_manager;
+
+  InterruptHandler(InterruptManager *interrupt_manager,
+                   uint8_t interrupt_number);
+  ~InterruptHandler();
+
+public:
+  virtual uint32_t handle_interrupt(uint32_t esp);
+};
+
 /*  **** Gate Descriptor(Interrupt Table Entry) ****
    -> low_offset(0-15bits): Lower 16 bits of the ISR address
    -> code_seg_selector(16-31bits): Selector of the code segment
@@ -88,7 +103,16 @@ struct IDTPointer {
 } __attribute__((packed));
 
 class InterruptManager {
+
+  // protected:
 public:
+  static InterruptManager *ActiveInterrruptManager;
+  InterruptHandler *handlers[256];
+
+  friend class InterruptHandler;
+
+
+
   /* 0x00-0xFF(255): Entries in the IDT
      -> Trap Gate(0x00-0x1F): CPU Exceptions (Faults, Traps),
      -> Interrupt Gate(0x20-0x2F): IRQ 0–15 (Hardware Interrupts),
@@ -125,6 +149,8 @@ public:
   uint16_t hardwareInterruptOffset();
   void activate();   // activate the interrupts
   void deactivate(); // deactivate the interrupts
+  uint32_t do_handle_interrupt(uint8_t interrupt_number, uint32_t esp);
+
 };
 } // namespace interrupts
 } // namespace uqaabOS

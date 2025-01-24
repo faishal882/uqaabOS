@@ -114,5 +114,5 @@ namespace uqaabOS
             }
         };
     }// namespace include
-}// namespace uqaabOs
+}// namespace uqaabOS
 #endif
