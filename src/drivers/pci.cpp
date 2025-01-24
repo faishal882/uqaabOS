@@ -45,7 +45,7 @@ namespace uqaabOS
 
             command_port.write(id);
 
-            data_port.write(id);
+            data_port.write(value);
         }
 
         bool PCIController::device_has_functions(uint16_t bus, uint16_t device)
@@ -54,7 +54,7 @@ namespace uqaabOS
             return read(bus, device, 0, 0x0E) & (1 << 7);
         }
 
-        void PCIController::select_drivers(DriverManager *driver_manager)
+        void PCIController::select_drivers(DriverManager *driver_manager, uqaabOS::interrupts::InterruptManager *interrpt_manager)
         {
 
             for (int bus = 0; bus < 8; bus++)
@@ -73,7 +73,25 @@ namespace uqaabOS
                         if (dev.vendor_id == 0x0000 || dev.vendor_id == 0xFFFF)
                         {
                             /*(invalid or unused) vendor_id*/
-                            break;
+                            continue;
+                        }
+
+                        /*bar_num variable refers to the base address register number 0-5 in case of header type 0 or 0-1 in case of header type 1*/
+                        for (int bar_num = 0; bar_num < 6; bar_num++)
+                        {
+
+                            BaseAdressRegister bar = get_base_adress_register(bus, device, function, bar_num);
+
+                            if (bar.address && bar.type == input_output)
+                                dev.port_base = (uint32_t)bar.address;
+
+                            Driver *driver = get_driver(dev, interrpt_manager);
+                            // libc::printf();
+
+                            if (driver != 0)
+                            {
+                                driver_manager->add_driver(driver);
+                            }
                         }
 
                         libc::printf("PCI BUS ");
@@ -118,6 +136,84 @@ namespace uqaabOS
             result.interrupt = read(bus, device, function, 0x03c);
 
             return result;
+        }
+
+        BaseAdressRegister PCIController::get_base_adress_register(uint16_t bus, uint16_t device, uint16_t function, uint16_t bar)
+        {
+
+            BaseAdressRegister result;
+
+            uint32_t header_type = read(bus, device, function, 0x0E) & 0x7F;
+
+            int max_bars = 6 - (4 * header_type);
+
+            if (bar >= max_bars)
+                return result;
+
+            uint32_t bar_value = read(bus, device, function, 0x10 + 4 * bar);
+            result.type = (bar_value & 0x1) ? input_output : memory_mapping;
+
+            uint32_t temp;
+
+            if (result.type == memory_mapping)
+            {
+
+                switch ((bar_value >> 1) & 0x3)
+                {
+
+                case 0:
+                case 1:
+                case 2:
+                    break;
+                }
+            }
+            else
+            {
+
+                result.address = (uint8_t *)(bar_value & ~0x3);
+                result.prefetchable = false;
+            }
+
+            return result;
+        }
+
+        Driver *PCIController::get_driver(PeripheralComponentInterconnectDeviceDescriptor dev, uqaabOS::interrupts::InterruptManager *interrupt_manager)
+        {
+
+            switch (dev.vendor_id)
+            {
+            case 0x1022: // AMD
+                switch (dev.device_id)
+                {
+                case 0x2000:
+                    libc::printf("AMD RYZEN");
+                    break;
+                }
+
+                break;
+            case 0x8086: // Intel
+                switch (dev.device_id)
+                {
+                case 0x1237:
+                    libc::printf("QEMU INTEL");
+                    break;
+                }
+                break;
+            }
+
+            switch (dev.class_id)
+            {
+            case 0x03: // graphics
+                switch (dev.sub_class_id)
+                {
+                case 0x00: // VGA
+                    libc::printf("VGA ");
+                    break;
+                }
+                break;
+            }
+
+            return 0;
         }
 
     }

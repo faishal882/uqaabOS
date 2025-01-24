@@ -5,11 +5,25 @@
 
 #include "../port.h"
 #include "driver.h"
+#include "../interrupts.h"
 
 namespace uqaabOS
 {
     namespace driver
     {
+
+        enum BaseAdressRegisterType{
+            memory_mapping = 0,
+            input_output = 0
+        };
+
+        class BaseAdressRegister{
+            public:
+            bool prefetchable;
+            uint8_t* address;
+            uint32_t size;
+            BaseAdressRegisterType type;
+        };
 
        /*represents metadata about a single PCI device.*/
         class PeripheralComponentInterconnectDeviceDescriptor
@@ -81,10 +95,15 @@ namespace uqaabOS
             bool device_has_functions(uint16_t bus, uint16_t device);
 
             /*suitable drivers with detected PCI devices.*/
-            void select_drivers(DriverManager *driver_manager);
+            void select_drivers(DriverManager *driver_manager , uqaabOS::interrupts::InterruptManager* interrupt_manager);
 
             /*retrieves a descriptor containing details about a PCI device.*/
             PeripheralComponentInterconnectDeviceDescriptor get_device_descriptor(uint16_t bus , uint16_t device , uint16_t function);
+
+            Driver* get_driver(PeripheralComponentInterconnectDeviceDescriptor dev , uqaabOS::interrupts::InterruptManager* interrupt_manager);
+
+            BaseAdressRegister get_base_adress_register(uint16_t bus , uint16_t device , uint16_t function , uint16_t bar);
+
         };
     }
 }

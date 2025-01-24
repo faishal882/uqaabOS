@@ -87,7 +87,7 @@ extern "C" void kernel_main() {
   driver_manager.add_driver(&keyboard);
 
   uqaabOS::driver::PCIController pci_controller;
-  pci_controller.select_drivers(&driver_manager);
+  pci_controller.select_drivers(&driver_manager , &interrupts);
 
   uqaabOS::driver::VideoGraphicsArray vga;
 
