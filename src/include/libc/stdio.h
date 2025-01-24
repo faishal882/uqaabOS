@@ -14,5 +14,6 @@ namespace uqaabOS
     void print_hex(unsigned long);
     void printf(const char *, ...);
   } // namespace libc
+
 } // namespace uqaabOS
 #endif // PRINTF_H

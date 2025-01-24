@@ -1,3 +1,4 @@
+
 ; Define the base address for IRQ handlers - IRQs are mapped starting at interrupt 0x20
 IRQ_BASE equ 0x20
 
@@ -79,10 +80,11 @@ HandleInterruptRequest 0x31      ; Custom IRQ handler
 int_bottom:
     pusha                               ; Push all general-purpose registers
     push ds                             ; Push segment registers
+
+
     push es
     push fs
     push gs
-    
     push esp                            ; Push stack pointer as parameter
     push dword [interrupt_number]        ; Push interrupt number as parameter
     call handle_interrupt               ; Call C handler function
@@ -127,3 +129,4 @@ interrupt_ignore:
 ; Data section for global variables
 section .data
     interrupt_number: dd 0              ; Storage for current interrupt number
+

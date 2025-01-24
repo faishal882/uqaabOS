@@ -103,12 +103,15 @@ struct IDTPointer {
 } __attribute__((packed));
 
 class InterruptManager {
+
   // protected:
 public:
   static InterruptManager *ActiveInterrruptManager;
   InterruptHandler *handlers[256];
 
   friend class InterruptHandler;
+
+
 
   /* 0x00-0xFF(255): Entries in the IDT
      -> Trap Gate(0x00-0x1F): CPU Exceptions (Faults, Traps),
@@ -146,8 +149,8 @@ public:
   uint16_t hardwareInterruptOffset();
   void activate();   // activate the interrupts
   void deactivate(); // deactivate the interrupts
-
   uint32_t do_handle_interrupt(uint8_t interrupt_number, uint32_t esp);
+
 };
 } // namespace interrupts
 } // namespace uqaabOS

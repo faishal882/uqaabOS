@@ -4,11 +4,11 @@
 #include "include/drivers/mouse.h"
 #include "include/drivers/pci.h"
 #include "include/drivers/vga.h"
+
 #include "include/gdt.h"
 #include "include/interrupts.h"
 #include "include/libc/stdio.h"
 
-// #include "include/keyboard/keyboard.h"
 
 // Compiler checks
 #if defined(__linux__)
@@ -16,6 +16,7 @@
 #elif !defined(__i386__)
 #error "This code must be compiled with an x86-elf compiler"
 #endif
+
 
 class PrintfKeyboardEventHandler
     : public uqaabOS::driver::KeyboardEventHandler {
@@ -65,6 +66,7 @@ public:
   }
 };
 
+
 // Kernel entry point
 extern "C" void kernel_main() {
   uqaabOS::libc::printf("Hello, World!\n");
@@ -105,6 +107,7 @@ extern "C" void kernel_main() {
   for (int32_t y = 0; y < 200; y++)
     for (int32_t x = 0; x < 320; x++)
       vga.put_pixel(x, y, 0x00, 0xFF, 0x00);
+
   while (1)
     ;
 }

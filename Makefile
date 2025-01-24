@@ -25,7 +25,6 @@ $(BUILD_DIR)/multiboot.o: $(SRC_DIR)/multiboot.asm
 # compile interruptstub.asm to interruptstub.o
 $(BUILD_DIR)/interruptstub.o: $(SRC_DIR)/core/interrupts/interruptstub.asm
 	nasm -f elf32 $< -o $@
-	
 
 # Compile kernel.cpp to object file
 $(BUILD_DIR)/kernel.o: $(SRC_DIR)/kernel.cpp
@@ -69,6 +68,7 @@ $(BUILD_DIR)/kernel.bin: $(BUILD_DIR)/kernel.o $(BUILD_DIR)/multiboot.o         
 						 $(BUILD_DIR)/interrupts.o $(BUILD_DIR)/interruptstub.o $(BUILD_DIR)/port.o \
 						 $(BUILD_DIR)/driver.o   $(BUILD_DIR)/pci.o \
 						 $(BUILD_DIR)/keyboard.o $(BUILD_DIR)/mouse.o  $(BUILD_DIR)/vga.o
+
 	$(LD) $(LDFLAGS) -o $@ $^
 
 # Create ISO image
