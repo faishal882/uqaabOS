@@ -1,14 +1,15 @@
-// GCC provides these header files automatically
 #include "include/drivers/driver.h"
 #include "include/drivers/keyboard.h"
 #include "include/drivers/mouse.h"
 #include "include/drivers/pci.h"
 #include "include/drivers/vga.h"
-
 #include "include/gdt.h"
+#include "include/gui/desktop.h"
+#include "include/gui/window.h"
 #include "include/interrupts.h"
 #include "include/libc/stdio.h"
 
+#define GRAPHICSMODE
 
 // Compiler checks
 #if defined(__linux__)
@@ -16,7 +17,6 @@
 #elif !defined(__i386__)
 #error "This code must be compiled with an x86-elf compiler"
 #endif
-
 
 class PrintfKeyboardEventHandler
     : public uqaabOS::driver::KeyboardEventHandler {
@@ -66,48 +66,70 @@ public:
   }
 };
 
-
 // Kernel entry point
 extern "C" void kernel_main() {
-  uqaabOS::libc::printf("Hello, World!\n");
-
   // Initialize Global Descriptor Table in kernel
   uqaabOS::include::GDT gdt;
   uqaabOS::libc::printf("Loaded GDT....\n");
 
-  // Initialize Interrupts
   uqaabOS::interrupts::InterruptManager interrupts(0x20, &gdt);
+  uqaabOS::libc::printf("Loaded Interrupts....\n");
+
+  uqaabOS::libc::printf("Initializing Hardware, Stage 1\n");
+
+#ifdef GRAPHICSMODE
+  uqaabOS::gui::Desktop desktop(320, 200, 0x00, 0x00, 0xA8);
+#endif
 
   uqaabOS::driver::DriverManager driver_manager;
 
+#ifdef GRAPHICSMODE
+  uqaabOS::driver::MouseDriver mouse(&interrupts, &desktop);
+#else
   MouseToConsole mouse_event_driver;
   uqaabOS::driver::MouseDriver mouse(&interrupts, &mouse_event_driver);
+#endif
   driver_manager.add_driver(&mouse);
 
+#ifdef GRAPHICSMODE
+  uqaabOS::driver::KeyboardDriver keyboard(&interrupts, &desktop);
+#else
   PrintfKeyboardEventHandler keyboard_event_driver;
   uqaabOS::driver::KeyboardDriver keyboard(&interrupts, &keyboard_event_driver);
+#endif
   driver_manager.add_driver(&keyboard);
 
   uqaabOS::driver::PCIController pci_controller;
-  pci_controller.select_drivers(&driver_manager , &interrupts);
+  pci_controller.select_drivers(&driver_manager, &interrupts);
 
   uqaabOS::driver::VideoGraphicsArray vga;
 
+  uqaabOS::libc::printf("Initializing Hardware, Stage 2\n");
   driver_manager.activate_all();
 
-  // driver_manager.add_driver(&keyboard);
-  // driver_manager.add_driver(&mouse);
+  uqaabOS::libc::printf("Initializing Hardware, Stage 3\n");
+
+#ifdef GRAPHICSMODE
+  vga.set_mode(320, 200, 8);
+  uqaabOS::gui::Window win1(&desktop, 10, 10, 20, 20, 0xFF, 0x00, 0x00);
+  desktop.add_child(&win1);
+  uqaabOS::gui::Window win2(&desktop, 40, 15, 30, 30, 0x00, 0xFF, 0x00);
+  desktop.add_child(&win2);
+#endif
 
   interrupts.activate();
 
   // should raise a divide by zero exception
-  uqaabOS::libc::print_int(10 / 1);
+  // uqaabOS::libc::print_int(10 / 1);
 
   vga.set_mode(320, 200, 8);
   for (int32_t y = 0; y < 200; y++)
     for (int32_t x = 0; x < 320; x++)
-      vga.put_pixel(x, y, 0x00, 0xFF, 0x00);
+      vga.put_pixel(x, y, 0xFF, 0xFF, 0xFF);
 
-  while (1)
-    ;
+  while (1) {
+#ifdef GRAPHICSMODE
+    desktop.Draw(&vga);
+#endif
+  }
 }

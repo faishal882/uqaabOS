@@ -117,13 +117,21 @@ public:
   // Draws a pixel using RGB values
   // @param x, y: Pixel coordinates
   // @param r, g, b: Color components (0-255)
-  virtual void put_pixel(uint32_t x, uint32_t y, uint8_t r, uint8_t g,
-                         uint8_t b);
+  virtual void put_pixel(int32_t x, int32_t y, uint8_t r, uint8_t g, uint8_t b);
 
   // Draws a pixel using a palette index
   // @param x, y: Pixel coordinates
   // @param colorIndex: Index into the color palette
-  virtual void put_pixel(uint32_t x, uint32_t y, uint8_t colorIndex);
+  virtual void put_pixel(int32_t x, int32_t y, uint8_t colorIndex);
+
+  /*
+   * Draws a filled rectangle using RGB values
+   * @param x, y: Top-left corner coordinates of the rectangle
+   * @param w, h: Width and height of the rectangle
+   * @param r, g, b: Color components (0-255)
+   */
+  virtual void fill_rectangle(uint32_t x, uint32_t y, uint32_t w, uint32_t h,
+                              uint8_t r, uint8_t g, uint8_t b);
 };
 
 } // namespace driver

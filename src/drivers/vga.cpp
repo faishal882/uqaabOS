@@ -189,7 +189,10 @@ uint8_t *VideoGraphicsArray::get_frame_buffer_segment() {
 }
 
 // Write a pixel to the screen using a color index
-void VideoGraphicsArray::put_pixel(uint32_t x, uint32_t y, uint8_t colorIndex) {
+void VideoGraphicsArray::put_pixel(int32_t x, int32_t y, uint8_t colorIndex) {
+  // Ignore out-of-bounds pixels
+  if (x < 0 || 320 <= x || y < 0 || 200 <= y)
+    return;
   // Calculate pixel address in video memory (320 pixels per row)
   uint8_t *pixelAddress = get_frame_buffer_segment() + 320 * y + x;
   *pixelAddress = colorIndex; // Write the color index to video memory
@@ -198,20 +201,33 @@ void VideoGraphicsArray::put_pixel(uint32_t x, uint32_t y, uint8_t colorIndex) {
 // Convert RGB values to a color index (currently very limited color support)
 uint8_t VideoGraphicsArray::get_color_index(uint8_t r, uint8_t g, uint8_t b) {
   // index standard 16-color VGA palette
-  if (r == 0xFF && g == 0x00 && b == 0x00)
-    return 0x04; // Red color index
-  if (r == 0x00 && g == 0xFF && b == 0x00)
-    return 0x02; // Green color index
+  if (r == 0x00 && g == 0x00 && b == 0x00)
+    return 0x00; // Black color index
   if (r == 0x00 && g == 0x00 && b == 0xFF)
     return 0x01; // Blue color index
+  if (r == 0x00 && g == 0xFF && b == 0x00)
+    return 0x02; // Green color index
+  if (r == 0xFF && g == 0x00 && b == 0x00)
+    return 0x04; // Red color index
+  if (r == 0xFF && g == 0xFF && b == 0xFF)
+    return 0x3F; // white color index
   return 0x00;   // Black color index
 }
 
 // Write a pixel to the screen using RGB values
-void VideoGraphicsArray::put_pixel(uint32_t x, uint32_t y, uint8_t r, uint8_t g,
+void VideoGraphicsArray::put_pixel(int32_t x, int32_t y, uint8_t r, uint8_t g,
                                    uint8_t b) {
   // Convert RGB to color index and write pixel
   put_pixel(x, y, get_color_index(r, g, b));
+}
+
+// Fill a rectangle with a specific color
+void VideoGraphicsArray::fill_rectangle(uint32_t x, uint32_t y, uint32_t w,
+                                        uint32_t h, uint8_t r, uint8_t g,
+                                        uint8_t b) {
+  for (int32_t Y = y; Y < y + h; Y++)
+    for (int32_t X = x; X < x + w; X++)
+      put_pixel(X, Y, r, g, b);
 }
 
 } // namespace driver

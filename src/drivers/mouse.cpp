@@ -85,7 +85,8 @@ uint32_t MouseDriver::handle_interrupt(uint32_t esp) {
     // Handle mouse movement if any
     if (buffer[1] != 0 || buffer[2] != 0) {
       // Call movement handler (note: Y axis is inverted)
-      handler->on_mouse_move(buffer[1], -buffer[2]);
+      // handler->on_mouse_move(buffer[1], -buffer[2]);
+      handler->on_mouse_move((int8_t)buffer[1], -((int8_t)buffer[2]));
     }
 
     // Check for button state changes
