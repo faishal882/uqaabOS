@@ -70,6 +70,9 @@ $(BUILD_DIR)/desktop.o: $(SRC_DIR)/gui/desktop.cpp
 $(BUILD_DIR)/widget.o: $(SRC_DIR)/gui/widget.cpp 
 	$(CC) $(CFLAGS) -c $< -o $@
 
+$(BUILD_DIR)/render.o: $(SRC_DIR)/gui/render.cpp 
+	$(CC) $(CFLAGS) -c $< -o $@
+
 
 # Link kernel binary
 $(BUILD_DIR)/kernel.bin: $(BUILD_DIR)/kernel.o $(BUILD_DIR)/multiboot.o             \
@@ -77,7 +80,7 @@ $(BUILD_DIR)/kernel.bin: $(BUILD_DIR)/kernel.o $(BUILD_DIR)/multiboot.o         
 						 $(BUILD_DIR)/interrupts.o $(BUILD_DIR)/interruptstub.o $(BUILD_DIR)/port.o \
 						 $(BUILD_DIR)/driver.o   $(BUILD_DIR)/pci.o \
 						 $(BUILD_DIR)/keyboard.o $(BUILD_DIR)/mouse.o  $(BUILD_DIR)/vga.o \
-						 $(BUILD_DIR)/window.o $(BUILD_DIR)/desktop.o $(BUILD_DIR)/widget.o
+						 $(BUILD_DIR)/window.o $(BUILD_DIR)/desktop.o $(BUILD_DIR)/widget.o  $(BUILD_DIR)/render.o
 
 	$(LD) $(LDFLAGS) -o $@ $^
 

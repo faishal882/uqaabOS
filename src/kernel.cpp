@@ -5,6 +5,7 @@
 #include "include/drivers/vga.h"
 #include "include/gdt.h"
 #include "include/gui/desktop.h"
+#include "include/gui/render.h"
 #include "include/gui/window.h"
 #include "include/interrupts.h"
 #include "include/libc/stdio.h"
@@ -78,7 +79,7 @@ extern "C" void kernel_main() {
   uqaabOS::libc::printf("Initializing Hardware, Stage 1\n");
 
 #ifdef GRAPHICSMODE
-  uqaabOS::gui::Desktop desktop(320, 200, 0x00, 0x00, 0xA8);
+  uqaabOS::gui::Desktop desktop(320, 200, 0x00, 0x00, 0xFF);
 #endif
 
   uqaabOS::driver::DriverManager driver_manager;
@@ -105,6 +106,9 @@ extern "C" void kernel_main() {
   uqaabOS::driver::VideoGraphicsArray vga;
 
   uqaabOS::libc::printf("Initializing Hardware, Stage 2\n");
+
+  // initialize render frame
+  uqaabOS::gui::Render rend(320, 200);
   driver_manager.activate_all();
 
   uqaabOS::libc::printf("Initializing Hardware, Stage 3\n");
@@ -112,9 +116,9 @@ extern "C" void kernel_main() {
 #ifdef GRAPHICSMODE
   vga.set_mode(320, 200, 8);
   uqaabOS::gui::Window win1(&desktop, 10, 10, 20, 20, 0xFF, 0x00, 0x00);
-  desktop.add_child(&win1);
+  desktop.AddChild(&win1);
   uqaabOS::gui::Window win2(&desktop, 40, 15, 30, 30, 0x00, 0xFF, 0x00);
-  desktop.add_child(&win2);
+  desktop.AddChild(&win2);
 #endif
 
   interrupts.activate();

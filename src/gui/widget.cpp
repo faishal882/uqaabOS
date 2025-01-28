@@ -3,120 +3,197 @@
 
 namespace uqaabOS {
 namespace gui {
+//>class Widget
+
+// constructor
 Widget::Widget(Widget *parent, int32_t x, int32_t y, int32_t w, int32_t h,
                uint8_t r, uint8_t g, uint8_t b)
-    : driver::KeyboardEventHandler() {
+    : KeyboardEventHandler() {
   this->parent = parent;
+
+  // position
   this->x = x;
   this->y = y;
+
+  // size
   this->w = w;
   this->h = h;
+
+  // rgb color attributes
   this->r = r;
   this->g = g;
   this->b = b;
-  this->focussable = true;
+
+  this->Focussable = true;
 }
+
+// destructor
 Widget::~Widget() {}
 
-void Widget::get_focus(Widget *widget) {
-  if (parent != 0)
-    parent->get_focus(widget);
+void Widget::GetFocus(Widget *widget) {
+
+  // pass focus to parent
+  // all widgets will pass focus to parents untill a parent contains the
+  // functionality to deal with it for example if you click a text box, tell the
+  // window containing that text box that it is in focus
+  if (parent != 0) {
+    parent->GetFocus(widget);
+  }
 }
-void Widget::model_to_screen(int32_t &x, int32_t &y) {
-  if (parent != 0)
-    parent->model_to_screen(x, y);
+
+// to get absolute coordinates
+void Widget::ModelToScreen(int32_t &x, int32_t &y) {
+
+  // get offset from parent
+  if (parent != 0) {
+    parent->ModelToScreen(x, y);
+  }
+
+  // add offset to this widget
   x += this->x;
   y += this->y;
 }
 
-void Widget::draw(GraphicsContext *gc) {
+void Widget::Draw(GraphicsContext *gc) {
+
+  // get absolute coordinates so we know where to draw
   int32_t X = 0;
   int32_t Y = 0;
-  model_to_screen(X, Y);
+  ModelToScreen(X, Y);
+
   gc->fill_rectangle(X, Y, w, h, r, g, b);
 }
-void Widget::on_mouse_down(int32_t x, int32_t y, uint8_t button) {
-  if (focussable)
-    get_focus(this);
+
+void Widget::OnMouseDown(int32_t x, int32_t y, uint8_t button) {
+  if (Focussable) {
+    GetFocus(this);
+  }
 }
 
-bool Widget::contains_coordiante(int32_t x, int32_t y) {
+// check if x and y are larger than x and y coordinates of the widget, and
+// smaller than the coordinates + width or height respectivly
+bool Widget::ContainsCoordinate(int32_t x, int32_t y) {
   return this->x <= x && x < this->x + this->w && this->y <= y &&
          y < this->y + this->h;
 }
 
-void Widget::on_mouse_up(int32_t x, int32_t y, uint8_t button) {}
-void Widget::on_mouse_move(int32_t oldx, int32_t oldy, int32_t newx,
-                           int32_t newy) {}
+void Widget::OnMouseUp(int32_t x, int32_t y, uint8_t button) {}
 
+void Widget::OnMouseMove(int32_t oldx, int32_t oldy, int32_t newx,
+                         int32_t newy) {}
+
+//<>class CompositeWidget
+
+// constructor
 CompositeWidget::CompositeWidget(Widget *parent, int32_t x, int32_t y,
                                  int32_t w, int32_t h, uint8_t r, uint8_t g,
                                  uint8_t b)
     : Widget(parent, x, y, w, h, r, g, b) {
-  focussed_child = 0;
-  num_children = 0;
+  focussedChild = 0;
+  numChildren = 0;
 }
 
+// destructor
 CompositeWidget::~CompositeWidget() {}
 
-void CompositeWidget::get_focus(Widget *widget) {
-  this->focussed_child = widget;
-  if (parent != 0)
-    parent->get_focus(this);
+void CompositeWidget::GetFocus(Widget *widget) {
+  this->focussedChild = widget;
+  if (parent != 0) {
+    parent->GetFocus(this);
+  }
 }
 
-bool CompositeWidget::add_child(Widget *child) {
-  if (num_children >= 100)
+bool CompositeWidget::AddChild(Widget *child) {
+  if (numChildren >= 100) {
     return false;
-  children[num_children++] = child;
+  }
+  children[numChildren++] = child;
   return true;
 }
 
-void CompositeWidget::draw(GraphicsContext *gc) {
-  Widget::draw(gc);
-  for (int i = num_children - 1; i >= 0; --i)
-    children[i]->draw(gc);
-}
-void CompositeWidget::on_mouse_down(int32_t x, int32_t y, uint8_t button) {
-  for (int i = 0; i < num_children; ++i)
-    if (children[i]->contains_coordiante(x - this->x, y - this->y)) {
-      children[i]->on_mouse_down(x - this->x, y - this->y, button);
-      break;
-    }
-}
-void CompositeWidget::on_mouse_up(int32_t x, int32_t y, uint8_t button) {
-  for (int i = 0; i < num_children; ++i)
-    if (children[i]->contains_coordiante(x - this->x, y - this->y)) {
-      children[i]->on_mouse_up(x - this->x, y - this->y, button);
-      break;
-    }
-}
-void CompositeWidget::on_mouse_move(int32_t oldx, int32_t oldy, int32_t newx,
-                                    int32_t newy) {
-  int firstchild = -1;
-  for (int i = 0; i < num_children; ++i)
-    if (children[i]->contains_coordiante(oldx - this->x, oldy - this->y)) {
-      children[i]->on_mouse_move(oldx - this->x, oldy - this->y, newx - this->x,
-                                 newy - this->y);
-      firstchild = i;
-      break;
-    }
-  for (int i = 0; i < num_children; ++i)
-    if (children[i]->contains_coordiante(newx - this->x, newy - this->y)) {
-      if (firstchild != i)
-        children[i]->on_mouse_move(oldx - this->x, oldy - this->y,
-                                   newx - this->x, newy - this->y);
-      break;
-    }
-}
-void CompositeWidget::on_key_down(char str) {
-  if (focussed_child != 0)
-    focussed_child->on_key_down(str);
-}
-void CompositeWidget::on_key_up(char str) {
-  if (focussed_child != 0)
-    focussed_child->on_key_up(str);
+void CompositeWidget::Draw(GraphicsContext *gc) {
+  // draw own background
+  Widget::Draw(gc);
+
+  // draw all children
+  for (int i = numChildren - 1; i >= 0; --i) {
+    children[i]->Draw(gc);
+  }
 }
 
+// iterate through children and pass event to the child that contains the
+// coorinate pass the click to the one that has been clicked
+void CompositeWidget::OnMouseDown(int32_t x, int32_t y, uint8_t button) {
+  for (int i = 0; i < numChildren; ++i) {
+    if (children[i]->ContainsCoordinate(x - this->x, y - this->y)) {
+      children[i]->OnMouseDown(x - this->x, y - this->y, button);
+
+      // only the top window is clicked on
+      break;
+    }
+  }
+}
+
+// iterate through children and pass event to the child that contains the
+// coorinate pass the click to the one that has been clicked
+void CompositeWidget::OnMouseUp(int32_t x, int32_t y, uint8_t button) {
+  for (int i = 0; i < numChildren; ++i) {
+    if (children[i]->ContainsCoordinate(x - this->x, y - this->y)) {
+      children[i]->OnMouseUp(x - this->x, y - this->y, button);
+
+      // only the top window is clicked on
+      break;
+    }
+  }
+}
+
+void CompositeWidget::OnMouseMove(int32_t oldx, int32_t oldy, int32_t newx,
+                                  int32_t newy) {
+
+  int firstChild = -1;
+
+  // for object that contains old coordinate
+  for (int i = 0; i < numChildren; ++i) {
+    if (children[i]->ContainsCoordinate(oldx - this->x, oldy - this->y)) {
+
+      // subtracting thisx/y turns the coordinates into relative coordinates
+      children[i]->OnMouseMove(oldx - this->x, oldy - this->y, newx - this->x,
+                               newy - this->y);
+
+      firstChild = i;
+
+      // only the top window is clicked on
+      break;
+    }
+  }
+
+  // for object that contains new coordinate
+  for (int i = 0; i < numChildren; ++i) {
+    if (children[i]->ContainsCoordinate(newx - this->x, newy - this->y)) {
+
+      if (firstChild != i) {
+        // subtracting thisx/y turns the coordinates into relative coordinates
+        children[i]->OnMouseMove(oldx - this->x, oldy - this->y, newx - this->x,
+                                 newy - this->y);
+      }
+
+      // only the top window is clicked on
+      break;
+    }
+  }
+}
+
+void CompositeWidget::OnKeyDown(char str) {
+  if (focussedChild != 0) {
+    focussedChild->on_key_down(str);
+  }
+}
+
+void CompositeWidget::OnKeyUp(char str) {
+  if (focussedChild != 0) {
+    focussedChild->on_key_up(str);
+  }
+}
+//<
 } // namespace gui
 } // namespace uqaabOS

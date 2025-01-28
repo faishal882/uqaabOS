@@ -2,51 +2,83 @@
 
 namespace uqaabOS {
 namespace gui {
+//>class Desktop
 
+//>protected:
+
+uint32_t MouseX;
+uint32_t MouseY;
+
+//<>public:
+
+// constructor
 Desktop::Desktop(int32_t w, int32_t h, uint8_t r, uint8_t g, uint8_t b)
     : CompositeWidget(0, 0, 0, w, h, r, g, b), MouseEventHandler() {
-  mouse_x = w / 2;
-  mouse_y = h / 2;
+  // initialize mouse in middle of screen.
+  // 0x, 0y is top left
+  // increaing x goes right
+  // increasing y goes down
+  MouseX = w / 2;
+  MouseY = h / 2;
 }
-Desktop::~Desktop() {}
-void Desktop::Draw(GraphicsContext *gc) {
-  CompositeWidget::draw(gc);
 
+// destructor
+Desktop::~Desktop() {}
+
+void Desktop::Draw(GraphicsContext *gc) {
+
+  // draw desktop
+  CompositeWidget::Draw(gc);
+
+  // draw mouse cursor
+  // cursor is a white cross
   for (int i = 0; i < 4; i++) {
-    gc->put_pixel(mouse_x - i, mouse_y, 0xFF, 0xFF, 0xFF);
-    gc->put_pixel(mouse_x + i, mouse_y, 0xFF, 0xFF, 0xFF);
-    gc->put_pixel(mouse_x, mouse_y - i, 0xFF, 0xFF, 0xFF);
-    gc->put_pixel(mouse_x, mouse_y + i, 0xFF, 0xFF, 0xFF);
+    gc->put_pixel(MouseX - i, MouseY, 0xFF, 0xFF, 0xFF);
+    gc->put_pixel(MouseX + i, MouseY, 0xFF, 0xFF, 0xFF);
+    gc->put_pixel(MouseX, MouseY - i, 0xFF, 0xFF, 0xFF);
+    gc->put_pixel(MouseX, MouseY + i, 0xFF, 0xFF, 0xFF);
   }
 }
 
-void Desktop::on_mouse_down(uint8_t button) {
-  CompositeWidget::on_mouse_down(mouse_x, mouse_y, button);
+void Desktop::OnMouseDown(uint8_t button) {
+  CompositeWidget::OnMouseDown(MouseX, MouseY, button);
 }
-void Desktop::on_mouse_up(uint8_t button) {
-  CompositeWidget::on_mouse_up(mouse_x, mouse_y, button);
+
+void Desktop::OnMouseUp(uint8_t button) {
+  CompositeWidget::OnMouseDown(MouseX, MouseY, button);
 }
-void Desktop::on_mouse_move(int x, int y) {
+
+void Desktop::OnMouseMove(int x, int y) {
+
+  // slow down mouse movement for desired sensativity
   x /= 4;
   y /= 4;
 
-  int32_t newmouse_x = mouse_x + x;
-  if (newmouse_x < 0)
-    newmouse_x = 0;
-  if (newmouse_x >= w)
-    newmouse_x = w - 1;
+  //>make sure mouse stays inside desktop screen
 
-  int32_t newmouse_y = mouse_y + y;
-  if (newmouse_y < 0)
-    newmouse_y = 0;
-  if (newmouse_y >= h)
-    newmouse_y = h - 1;
+  // calculate new x coord
+  int32_t newMouseX = MouseX + x;
+  if (newMouseX < 0)
+    newMouseX = 0;
+  if (newMouseX >= w)
+    newMouseX = w - 1;
 
-  CompositeWidget::on_mouse_move(mouse_x, mouse_y, newmouse_x, newmouse_y);
+  // calculate new y coord
+  int32_t newMouseY = MouseY + y;
+  if (newMouseY < 0)
+    newMouseY = 0;
+  if (newMouseY >= h)
+    newMouseY = h - 1;
+  //<
 
-  mouse_x = newmouse_x;
-  mouse_y = newmouse_y;
+  // pass on movment to CompositeWidget
+  CompositeWidget::OnMouseMove(MouseX, MouseY, newMouseX, newMouseY);
+
+  // store new values back in coordinates
+  MouseX = newMouseX;
+  MouseY = newMouseY;
 }
-
+//<
+//<
 } // namespace gui
 } // namespace uqaabOS
