@@ -56,10 +56,13 @@ namespace uqaabOS
 
     // setup interrupt manager
     InterruptManager::InterruptManager(uint16_t hardware_interrupt_offset,
-                                       uqaabOS::include::GDT *gdt)
+                                       uqaabOS::include::GDT *gdt , multitasking::TaskManager* task_manager)
         : PIC_master_command_port(0x20), PIC_master_data_port(0x21),
           PIC_slave_command_port(0xA0), PIC_slave_data_port(0xA1)
     {
+
+      this -> task_manager = task_manager;
+
       this->hardware_interrupt_offset = hardware_interrupt_offset;
       // ISR code segment
       uint32_t code_segment = gdt->code_segment_selector();
@@ -247,6 +250,10 @@ uint32_t InterruptManager::do_handle_interrupt(uint8_t interrupt_number,
     } else {
       libc::printf("UNHANDLED INTERRUPT 0x%02X\n", interrupt_number);
     }
+  }
+
+  if(interrupt_number == hardware_interrupt_offset){
+    esp = (uint32_t)task_manager -> schedule((multitasking::CPUState*)esp);
   }
 
       if (hardware_interrupt_offset <= interrupt_number &&

@@ -8,7 +8,7 @@
 #include "include/gdt.h"
 #include "include/interrupts.h"
 #include "include/libc/stdio.h"
-
+#include "include/multitasking/multitasking.h"
 
 // Compiler checks
 #if defined(__linux__)
@@ -67,6 +67,18 @@ public:
 };
 
 
+void taskA(){
+  while(true){
+    uqaabOS::libc::printf("A");
+  }
+}
+
+void taskB(){
+  while(true){
+    uqaabOS::libc::printf("B");
+  }
+}
+
 // Kernel entry point
 extern "C" void kernel_main() {
   uqaabOS::libc::printf("Hello, World!\n");
@@ -75,8 +87,19 @@ extern "C" void kernel_main() {
   uqaabOS::include::GDT gdt;
   uqaabOS::libc::printf("Loaded GDT....\n");
 
+  // Initialize TaskManager
+  uqaabOS::multitasking::TaskManager task_manager;
+
+  // Initialize Task
+  uqaabOS::multitasking::Task task1(&gdt , taskA);
+  uqaabOS::multitasking::Task task2(&gdt , taskB);
+
+  // add task in task manager
+  task_manager.add_task(&task1);
+  task_manager.add_task(&task2);
+
   // Initialize Interrupts
-  uqaabOS::interrupts::InterruptManager interrupts(0x20, &gdt);
+  uqaabOS::interrupts::InterruptManager interrupts(0x20, &gdt , &task_manager);
 
   uqaabOS::driver::DriverManager driver_manager;
 
