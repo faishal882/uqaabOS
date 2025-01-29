@@ -110,6 +110,7 @@ public:
   static InterruptManager *ActiveInterrruptManager;
   InterruptHandler *handlers[256];
   multitasking::TaskManager* task_manager;
+  
   friend class InterruptHandler;
 
 

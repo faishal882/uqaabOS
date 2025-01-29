@@ -253,7 +253,7 @@ uint32_t InterruptManager::do_handle_interrupt(uint8_t interrupt_number,
   }
 
   if(interrupt_number == hardware_interrupt_offset){
-    esp = (uint32_t)task_manager -> schedule((multitasking::CPUState*)esp);
+    esp = (uint32_t)(task_manager -> schedule((multitasking::CPUState*)esp));
   }
 
       if (hardware_interrupt_offset <= interrupt_number &&

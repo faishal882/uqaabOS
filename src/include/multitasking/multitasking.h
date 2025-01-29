@@ -40,7 +40,7 @@ namespace uqaabOS
             CPUState* cpu_state;
 
             public:
-            Task(include::GDT* gdt , void entry_point());
+            Task(include::GDT* gdt , void (*entry_point)());
             ~Task();
         };
 

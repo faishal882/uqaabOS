@@ -55,6 +55,9 @@ $(BUILD_DIR)/mouse.o: $(SRC_DIR)/drivers/mouse.cpp
 $(BUILD_DIR)/vga.o: $(SRC_DIR)/drivers/vga.cpp 
 	$(CC) $(CFLAGS) -c $< -o $@
 
+$(BUILD_DIR)/multitasking.o: $(SRC_DIR)/multitasking/multitasking.cpp 
+	$(CC) $(CFLAGS) -c $< -o $@
+
 $(BUILD_DIR)/driver.o: $(SRC_DIR)/drivers/driver.cpp 
 	$(CC) $(CFLAGS) -c $< -o $@
 
@@ -67,7 +70,7 @@ $(BUILD_DIR)/kernel.bin: $(BUILD_DIR)/kernel.o $(BUILD_DIR)/multiboot.o         
 	                     $(BUILD_DIR)/gdt.o $(BUILD_DIR)/stdio.o                     \
 						 $(BUILD_DIR)/interrupts.o $(BUILD_DIR)/interruptstub.o $(BUILD_DIR)/port.o \
 						 $(BUILD_DIR)/driver.o   $(BUILD_DIR)/pci.o \
-						 $(BUILD_DIR)/keyboard.o $(BUILD_DIR)/mouse.o  $(BUILD_DIR)/vga.o
+						 $(BUILD_DIR)/keyboard.o $(BUILD_DIR)/mouse.o  $(BUILD_DIR)/vga.o $(BUILD_DIR)/multitasking.o
 
 	$(LD) $(LDFLAGS) -o $@ $^
 

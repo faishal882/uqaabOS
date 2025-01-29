@@ -9,7 +9,7 @@ namespace uqaabOS
     {
 
         include::GDT* gdt ;
-        Task::Task(uqaabOS::include::GDT* gdt , void entry_point()){
+        Task::Task(uqaabOS::include::GDT* gdt , void (*entry_point)()){
             cpu_state = (CPUState*)(stack + 4096 - sizeof(CPUState));
 
             cpu_state -> eax = 0;

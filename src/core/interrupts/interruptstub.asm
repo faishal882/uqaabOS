@@ -14,6 +14,7 @@ global handle_exception%1                   ; Make the handler visible to linker
 handle_exception%1:
     push dword [esp]                       ; Save the CPU-pushed error code
     mov dword [interrupt_number], %1        ; Store the exception number in global variable
+    push $0
     jmp int_bottom                         ; Jump to common handler code
 %endmacro
 
@@ -78,24 +79,43 @@ HandleInterruptRequest 0x31      ; Custom IRQ handler
 
 ; Common interrupt handling code
 int_bottom:
-    pusha                               ; Push all general-purpose registers
-    push ds                             ; Push segment registers
+    ;pusha                               ; Push all general-purpose registers
+    ;push ds                             ; Push segment registers
 
 
-    push es
-    push fs
-    push gs
+    ;push es
+    ;push fs
+    ;push gs
+
+    push ebp
+    push edi
+    push esi
+
+    push edx
+    push ecx
+    push ebx
+    push eax
+
     push esp                            ; Push stack pointer as parameter
     push dword [interrupt_number]        ; Push interrupt number as parameter
     call handle_interrupt               ; Call C handler function
-    add esp, 8                          ; Clean up the two parameters we pushed
+    ;add esp, 8                          ; Clean up the two parameters we pushed
     mov esp, eax                        ; Update stack pointer from return value
     
-    pop gs                              ; Restore segment registers
-    pop fs
-    pop es
-    pop ds
-    popa                                ; Restore all general-purpose registers
+    ;pop gs                              ; Restore segment registers
+    ;pop fs
+    ;pop es
+    ;pop ds
+    ;popa                                ; Restore all general-purpose registers
+
+    pop eax
+    pop ebx
+    pop ecx
+    pop edx
+
+    pop esi
+    pop edi
+    pop ebp
     
     ; Check if this exception pushed an error code
     cmp dword [interrupt_number], 0x08  ; Check Double Fault
