@@ -17,7 +17,6 @@
 #error "This code must be compiled with an x86-elf compiler"
 #endif
 
-
 class PrintfKeyboardEventHandler
     : public uqaabOS::driver::KeyboardEventHandler {
 public:
@@ -66,15 +65,14 @@ public:
   }
 };
 
-
-void taskA(){
-  while(true){
+void taskA() {
+  for (int i = 0; i < 50; i++) {
     uqaabOS::libc::printf("A");
   }
 }
 
-void taskB(){
-  while(true){
+void taskB() {
+  while (true) {
     uqaabOS::libc::printf("B");
   }
 }
@@ -91,15 +89,15 @@ extern "C" void kernel_main() {
   uqaabOS::multitasking::TaskManager task_manager;
 
   // Initialize Task
-  uqaabOS::multitasking::Task task1(&gdt , taskA);
-  uqaabOS::multitasking::Task task2(&gdt , taskB);
+  uqaabOS::multitasking::Task task1(&gdt, taskA);
+  uqaabOS::multitasking::Task task2(&gdt, taskB);
 
   // add task in task manager
-  task_manager.add_task(&task1);
+  // task_manager.add_task(&task1);
   task_manager.add_task(&task2);
 
   // Initialize Interrupts
-  uqaabOS::interrupts::InterruptManager interrupts(0x20, &gdt , &task_manager);
+  uqaabOS::interrupts::InterruptManager interrupts(0x20, &gdt, &task_manager);
 
   uqaabOS::driver::DriverManager driver_manager;
 
@@ -112,7 +110,7 @@ extern "C" void kernel_main() {
   driver_manager.add_driver(&keyboard);
 
   uqaabOS::driver::PCIController pci_controller;
-  pci_controller.select_drivers(&driver_manager , &interrupts);
+  pci_controller.select_drivers(&driver_manager, &interrupts);
 
   uqaabOS::driver::VideoGraphicsArray vga;
 
@@ -126,10 +124,10 @@ extern "C" void kernel_main() {
   // should raise a divide by zero exception
   uqaabOS::libc::print_int(10 / 1);
 
-  vga.set_mode(320, 200, 8);
-  for (int32_t y = 0; y < 200; y++)
-    for (int32_t x = 0; x < 320; x++)
-      vga.put_pixel(x, y, 0x00, 0xFF, 0x00);
+  // vga.set_mode(320, 200, 8);
+  // for (int32_t y = 0; y < 200; y++)
+  //   for (int32_t x = 0; x < 320; x++)
+  //     vga.put_pixel(x, y, 0x00, 0xFF, 0x00);
 
   while (1)
     ;

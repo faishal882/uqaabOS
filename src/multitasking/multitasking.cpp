@@ -3,65 +3,63 @@
 
 #include "../include/gdt.h"
 
-namespace uqaabOS
-{
-    namespace multitasking
-    {
+namespace uqaabOS {
+namespace multitasking {
 
-        include::GDT* gdt ;
-        Task::Task(uqaabOS::include::GDT* gdt , void (*entry_point)()){
-            cpu_state = (CPUState*)(stack + 4096 - sizeof(CPUState));
+include::GDT *gdt;
+Task::Task(uqaabOS::include::GDT *gdt, void (*entry_point)()) {
+  cpu_state = (CPUState *)(stack + 4096 - sizeof(CPUState));
 
-            cpu_state -> eax = 0;
-            cpu_state -> ebx = 0;
-            cpu_state -> ecx = 0;
-            cpu_state -> edx = 0;
+  cpu_state->eax = 0;
+  cpu_state->ebx = 0;
+  cpu_state->ecx = 0;
+  cpu_state->edx = 0;
 
-            cpu_state -> esi = 0;
-            cpu_state -> edi = 0;
-            cpu_state -> ebp = 0;
+  cpu_state->esi = 0;
+  cpu_state->edi = 0;
+  cpu_state->ebp = 0;
 
-            cpu_state -> eip = (uint32_t)entry_point;
-            cpu_state -> cs = gdt -> code_segment_selector();
+  cpu_state->eip = (uint32_t)entry_point;
+  cpu_state->cs = gdt->code_segment_selector();
 
-            cpu_state -> eflags = 0x202;
-        }
-        
-        Task::~Task(){}
+  cpu_state->eflags = 0x202;
+}
 
-        TaskManager::TaskManager(){
-            num_tasks = 0;
-            current_task = -1;
-        }
+Task::~Task() {}
 
-        TaskManager::~TaskManager(){}
+TaskManager::TaskManager() {
+  num_tasks = 0;
+  current_task = -1;
+}
 
-        bool TaskManager::add_task(Task* task){
+TaskManager::~TaskManager() {}
 
-            if(num_tasks >= 256)
-            return false;
+bool TaskManager::add_task(Task *task) {
 
-            tasks[num_tasks++] = task;
+  if (num_tasks >= 256)
+    return false;
 
-            return true;
-        }
+  tasks[num_tasks++] = task;
 
-        CPUState* TaskManager::schedule(CPUState* cpu_state){
+  return true;
+}
 
-            if(num_tasks <= 0){
-                return cpu_state;
-            }
+CPUState *TaskManager::schedule(CPUState *cpu_state) {
 
-            if(current_task >= 0){
-                tasks[current_task] -> cpu_state = cpu_state;
-            }
+  if (num_tasks <= 0) {
+    return cpu_state;
+  }
 
-            if(++current_task >= num_tasks){
-                current_task %= num_tasks;
-            }
+  if (current_task >= 0) {
+    tasks[current_task]->cpu_state = cpu_state;
+  }
 
-            return tasks[current_task] -> cpu_state;
-        }
-    } // namespace multitasking
-    
+  if (++current_task >= num_tasks) {
+    current_task %= num_tasks;
+  }
+
+  return tasks[current_task]->cpu_state;
+}
+} // namespace multitasking
+
 } // namespace uqaabOS

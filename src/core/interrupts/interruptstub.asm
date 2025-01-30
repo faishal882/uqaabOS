@@ -1,4 +1,3 @@
-
 ; Define the base address for IRQ handlers - IRQs are mapped starting at interrupt 0x20
 IRQ_BASE equ 0x20
 
@@ -12,9 +11,7 @@ section .text
 %macro HandleExceptionWithError 1 
 global handle_exception%1                   ; Make the handler visible to linker
 handle_exception%1:
-    push dword [esp]                       ; Save the CPU-pushed error code
     mov dword [interrupt_number], %1        ; Store the exception number in global variable
-    push $0
     jmp int_bottom                         ; Jump to common handler code
 %endmacro
 
@@ -23,6 +20,7 @@ handle_exception%1:
 global handle_exception%1                   ; Make the handler visible to linker
 handle_exception%1:
     mov dword [interrupt_number], %1        ; Store the exception number in global variable
+    push 0                                 ; Push a dummy error code (0) for consistency
     jmp int_bottom                         ; Jump to common handler code
 %endmacro
 
@@ -31,6 +29,7 @@ handle_exception%1:
 global IRQ%1                               ; Make the IRQ handler visible to linker
 IRQ%1:
     mov dword [interrupt_number], (%1 + IRQ_BASE)  ; Store IRQ number offset by base
+    push 0                                 ; Push a dummy error code (0) for consistency
     jmp int_bottom                         ; Jump to common handler code
 %endmacro
 
@@ -79,67 +78,35 @@ HandleInterruptRequest 0x31      ; Custom IRQ handler
 
 ; Common interrupt handling code
 int_bottom:
-    ;pusha                               ; Push all general-purpose registers
-    ;push ds                             ; Push segment registers
-
-
-    ;push es
-    ;push fs
-    ;push gs
-
+    ; Save registers
     push ebp
     push edi
     push esi
-
     push edx
     push ecx
     push ebx
     push eax
 
+    ; Call the C handler function
     push esp                            ; Push stack pointer as parameter
     push dword [interrupt_number]        ; Push interrupt number as parameter
     call handle_interrupt               ; Call C handler function
-    ;add esp, 8                          ; Clean up the two parameters we pushed
     mov esp, eax                        ; Update stack pointer from return value
-    
-    ;pop gs                              ; Restore segment registers
-    ;pop fs
-    ;pop es
-    ;pop ds
-    ;popa                                ; Restore all general-purpose registers
 
+    ; Restore registers
     pop eax
     pop ebx
     pop ecx
     pop edx
-
     pop esi
     pop edi
     pop ebp
-    
-    ; Check if this exception pushed an error code
-    cmp dword [interrupt_number], 0x08  ; Check Double Fault
-    je .has_error
-    cmp dword [interrupt_number], 0x0A  ; Check Bad TSS
-    je .has_error
-    cmp dword [interrupt_number], 0x0B  ; Check Segment Not Present
-    je .has_error
-    cmp dword [interrupt_number], 0x0C  ; Check Stack Fault
-    je .has_error
-    cmp dword [interrupt_number], 0x0D  ; Check General Protection Fault
-    je .has_error
-    cmp dword [interrupt_number], 0x0E  ; Check Page Fault
-    je .has_error
-    cmp dword [interrupt_number], 0x11  ; Check Alignment Check
-    je .has_error
-    
-    jmp .return                         ; No error code to clean up
 
-.has_error:
-    add esp, 4                          ; Remove error code from stack
+    ; Clean up the stack (error code or dummy value)
+    add esp, 4
 
-.return:
-    iret                                ; Return from interrupt
+    ; Return from interrupt
+    iret
 
 ; Default handler for unhandled interrupts
 global interrupt_ignore
@@ -149,4 +116,3 @@ interrupt_ignore:
 ; Data section for global variables
 section .data
     interrupt_number: dd 0              ; Storage for current interrupt number
-
