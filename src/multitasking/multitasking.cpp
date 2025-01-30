@@ -19,6 +19,8 @@ Task::Task(uqaabOS::include::GDT *gdt, void (*entry_point)()) {
   cpu_state->edi = 0;
   cpu_state->ebp = 0;
 
+  cpu_state->esp = (uint32_t)(stack + 4096 - sizeof(CPUState));
+
   cpu_state->eip = (uint32_t)entry_point;
   cpu_state->cs = gdt->code_segment_selector();
 
