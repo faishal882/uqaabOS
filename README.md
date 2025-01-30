@@ -30,7 +30,7 @@ UqaabOS is a foundational operating system developed entirely from scratch, adhe
   - **C++**
 - **Development Tools:**
   - **GNU Make** (Build Automation)
-  - **NASM & GAS Assemblers**
+  - **NASM Assemblers**
   - **LLVM Tools** (clang-format, clang-tidy)
   - **Xorriso & GRUB** (ISO Image Creation)
 
