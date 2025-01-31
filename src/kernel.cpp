@@ -4,7 +4,6 @@
 #include "include/drivers/mouse.h"
 #include "include/drivers/pci.h"
 #include "include/drivers/vga.h"
-
 #include "include/gdt.h"
 #include "include/interrupts.h"
 #include "include/libc/stdio.h"
@@ -66,27 +65,36 @@ public:
 };
 
 void taskA() {
-  for (int i = 0; i < 500; i++) {
-    uqaabOS::libc::printf("A");
+  for (int i = 0; i < 10; i++) {
+    uqaabOS::libc::printf("A:");
+    uqaabOS::libc::print_int(i);
+    if (i == 5)
+      asm volatile("int $0x20");
   }
 
-  return;
+  // return;
 }
 
 void taskB() {
-  for (int j = 0; j < 500; j++) {
-    uqaabOS::libc::printf("B");
+  for (int j = 0; j < 10; j++) {
+    uqaabOS::libc::printf("B:");
+    uqaabOS::libc::print_int(j);
+    if (j == 5)
+      asm volatile("int $0x20");
   }
 
-  return;
+  // return;
 }
 
 void taskC() {
-  for (int k = 0; k < 500; k++) {
-    uqaabOS::libc::printf("C");
+  for (int k = 0; k < 10; k++) {
+    uqaabOS::libc::printf("C:");
+    uqaabOS::libc::print_int(k);
+    if (k == 5)
+      asm volatile("int $0x20");
   }
 
-  return;
+  // return;
 }
 
 // Kernel entry point
@@ -104,7 +112,6 @@ extern "C" void kernel_main() {
   uqaabOS::multitasking::Task task1(&gdt, taskA);
   uqaabOS::multitasking::Task task2(&gdt, taskB);
   uqaabOS::multitasking::Task task3(&gdt, taskC);
-  // uqaabOS::multitasking::Task task4(&gdt, taskD);
 
   // Add tasks to task manager
   task_manager.add_task(&task1);
@@ -115,9 +122,36 @@ extern "C" void kernel_main() {
   // Initialize InterruptManager with TaskManager
   uqaabOS::interrupts::InterruptManager interrupt_manager(0x20, &gdt,
                                                           &task_manager);
+
+  uqaabOS::driver::DriverManager driver_manager;
+
+  MouseToConsole mouse_event_driver;
+  uqaabOS::driver::MouseDriver mouse(&interrupt_manager, &mouse_event_driver);
+  driver_manager.add_driver(&mouse);
+
+  PrintfKeyboardEventHandler keyboard_event_driver;
+  uqaabOS::driver::KeyboardDriver keyboard(&interrupt_manager,
+                                           &keyboard_event_driver);
+  driver_manager.add_driver(&keyboard);
+
+  uqaabOS::driver::PCIController pci_controller;
+  pci_controller.select_drivers(&driver_manager, &interrupt_manager);
+
+  // uqaabOS::driver::VideoGraphicsArray vga;
+
+  driver_manager.activate_all();
+
   interrupt_manager.activate();
 
-  // Start multitasking
-  while (true)
+  // should raise a divide by zero exception
+  uqaabOS::libc::print_int(10 / 1);
+
+  // vga graphics mode
+  // vga.set_mode(320, 200, 8);
+  // for (int32_t y = 0; y < 200; y++)
+  //   for (int32_t x = 0; x < 320; x++)
+  //     vga.put_pixel(x, y, 0x00, 0xFF, 0x00);
+
+  while (1)
     ;
 }
