@@ -6,6 +6,7 @@
 #include "gdt.h"
 #include "libc/stdio.h"
 #include "port.h"
+#include "multitasking/multitasking.h"
 
 namespace uqaabOS {
 namespace interrupts {
@@ -108,7 +109,8 @@ class InterruptManager {
 public:
   static InterruptManager *ActiveInterrruptManager;
   InterruptHandler *handlers[256];
-
+  multitasking::TaskManager* task_manager;
+  
   friend class InterruptHandler;
 
 
@@ -143,7 +145,7 @@ public:
 
 public:
   InterruptManager(uint16_t hardware_interrupt_offset,
-                   uqaabOS::include::GDT *gdt);
+                   uqaabOS::include::GDT *gdt , multitasking::TaskManager* task_manager);
   ~InterruptManager();
 
   uint16_t hardwareInterruptOffset();
