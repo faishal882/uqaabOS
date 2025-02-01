@@ -65,36 +65,46 @@ public:
 };
 
 void taskA() {
-  for (int i = 0; i < 10; i++) {
-    uqaabOS::libc::printf("A:");
-    uqaabOS::libc::print_int(i);
-    if (i == 5)
+  int i = 0;
+  while (1) {
+    i++;
+    uqaabOS::libc::printf("A");
+    if (i % 10 == 0) {
       asm volatile("int $0x20");
+    }
   }
 
-  // return;
+  asm volatile("int $0x20");
 }
 
 void taskB() {
-  for (int j = 0; j < 10; j++) {
-    uqaabOS::libc::printf("B:");
-    uqaabOS::libc::print_int(j);
-    if (j == 5)
+  for (int i = 0; i < 100000000; i++) {
+    uqaabOS::libc::printf("B");
+    if (i % 10 == 0) {
       asm volatile("int $0x20");
+    }
   }
-
-  // return;
+  asm volatile("int $0x20");
 }
 
 void taskC() {
-  for (int k = 0; k < 10; k++) {
-    uqaabOS::libc::printf("C:");
-    uqaabOS::libc::print_int(k);
-    if (k == 5)
+  for (int i = 0; i < 100000000; i++) {
+    uqaabOS::libc::printf("C");
+    if (i % 10 == 0) {
       asm volatile("int $0x20");
+    }
   }
+  asm volatile("int $0x20");
+}
 
-  // return;
+void taskD() {
+  for (int i = 0; i < 100000000; i++) {
+    uqaabOS::libc::printf("D");
+    if (i % 10 == 0) {
+      asm volatile("int $0x20");
+    }
+  }
+  asm volatile("int $0x20");
 }
 
 // Kernel entry point
@@ -112,12 +122,13 @@ extern "C" void kernel_main() {
   uqaabOS::multitasking::Task task1(&gdt, taskA);
   uqaabOS::multitasking::Task task2(&gdt, taskB);
   uqaabOS::multitasking::Task task3(&gdt, taskC);
+  uqaabOS::multitasking::Task task4(&gdt, taskD);
 
   // Add tasks to task manager
   task_manager.add_task(&task1);
   task_manager.add_task(&task2);
   task_manager.add_task(&task3);
-  // task_manager.add_task(&task4);
+  task_manager.add_task(&task4);
 
   // Initialize InterruptManager with TaskManager
   uqaabOS::interrupts::InterruptManager interrupt_manager(0x20, &gdt,
