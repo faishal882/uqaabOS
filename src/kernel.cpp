@@ -3,10 +3,11 @@
 #include "include/drivers/keyboard.h"
 #include "include/drivers/mouse.h"
 #include "include/drivers/pci.h"
-#include "include/drivers/vga.h"
+// #include "include/drivers/vga.h"
 #include "include/gdt.h"
 #include "include/interrupts.h"
 #include "include/libc/stdio.h"
+#include "include/memorymanagement/memorymanagement.h"
 #include "include/multitasking/multitasking.h"
 
 // Compiler checks
@@ -108,27 +109,52 @@ void taskD() {
 }
 
 // Kernel entry point
-extern "C" void kernel_main() {
+extern "C" void kernel_main(const void *multiboot_structure,
+                            uint32_t /*multiboot_magic*/) {
   uqaabOS::libc::printf("Hello, World!\n");
 
   // Initialize Global Descriptor Table in kernel
   uqaabOS::include::GDT gdt;
   uqaabOS::libc::printf("Loaded GDT....\n");
 
+  // Initialize MemoryManager
+  uint32_t *memupper =
+      (uint32_t *)(((uqaabOS::memorymanagement::size_t)multiboot_structure) +
+                   8);
+  size_t heap = 10 * 1024 * 1024;
+  uqaabOS::memorymanagement::MemoryManager memoryManager(
+      heap, (*memupper) * 1024 - heap - 10 * 1024);
+
+  uqaabOS::libc::printf("heap: ");
+  uqaabOS::libc::print_hex(heap);
+  // uqaabOS::libc::print_hex((heap >> 24) & 0xFF);
+  // uqaabOS::libc::print_hex((heap >> 16) & 0xFF);
+  // uqaabOS::libc::print_hex((heap >> 8) & 0xFF);
+  // uqaabOS::libc::print_hex((heap) & 0xFF);
+
+  void *allocated = memoryManager.malloc(1024);
+  uqaabOS::libc::printf("\nallocated: ");
+  uqaabOS::libc::print_hex((size_t)allocated);
+  // uqaabOS::libc::print_hex(((size_t)allocated >> 24) & 0xFF);
+  // uqaabOS::libc::print_hex(((size_t)allocated >> 16) & 0xFF);
+  // uqaabOS::libc::print_hex(((size_t)allocated >> 8) & 0xFF);
+  // uqaabOS::libc::print_hex(((size_t)allocated) & 0xFF);
+  uqaabOS::libc::printf("\n");
+
   // Initialize TaskManager
   uqaabOS::multitasking::TaskManager task_manager;
 
   // Initialize Task
-  uqaabOS::multitasking::Task task1(&gdt, taskA);
-  uqaabOS::multitasking::Task task2(&gdt, taskB);
-  uqaabOS::multitasking::Task task3(&gdt, taskC);
-  uqaabOS::multitasking::Task task4(&gdt, taskD);
+  // uqaabOS::multitasking::Task task1(&gdt, taskA);
+  // uqaabOS::multitasking::Task task2(&gdt, taskB);
+  // uqaabOS::multitasking::Task task3(&gdt, taskC);
+  // uqaabOS::multitasking::Task task4(&gdt, taskD);
 
-  // Add tasks to task manager
-  task_manager.add_task(&task1);
-  task_manager.add_task(&task2);
-  task_manager.add_task(&task3);
-  task_manager.add_task(&task4);
+  // // Add tasks to task manager
+  // task_manager.add_task(&task1);
+  // task_manager.add_task(&task2);
+  // task_manager.add_task(&task3);
+  // task_manager.add_task(&task4);
 
   // Initialize InterruptManager with TaskManager
   uqaabOS::interrupts::InterruptManager interrupt_manager(0x20, &gdt,
