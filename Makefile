@@ -64,13 +64,18 @@ $(BUILD_DIR)/driver.o: $(SRC_DIR)/drivers/driver.cpp
 $(BUILD_DIR)/pci.o: $(SRC_DIR)/drivers/pci.cpp 
 	$(CC) $(CFLAGS) -c $< -o $@
 
+# memory management files
+$(BUILD_DIR)/memorymanagement.o: $(SRC_DIR)/memorymanagement/memorymanagement.cpp
+	$(CC) $(CFLAGS) -c $< -o $@
+
 
 # Link kernel binary
 $(BUILD_DIR)/kernel.bin: $(BUILD_DIR)/kernel.o $(BUILD_DIR)/multiboot.o             \
 	                     $(BUILD_DIR)/gdt.o $(BUILD_DIR)/stdio.o                     \
 						 $(BUILD_DIR)/interrupts.o $(BUILD_DIR)/interruptstub.o $(BUILD_DIR)/port.o \
 						 $(BUILD_DIR)/driver.o   $(BUILD_DIR)/pci.o \
-						 $(BUILD_DIR)/keyboard.o $(BUILD_DIR)/mouse.o  $(BUILD_DIR)/vga.o $(BUILD_DIR)/multitasking.o
+						 $(BUILD_DIR)/keyboard.o $(BUILD_DIR)/mouse.o  $(BUILD_DIR)/vga.o \
+						 $(BUILD_DIR)/multitasking.o $(BUILD_DIR)/memorymanagement.o
 
 	$(LD) $(LDFLAGS) -o $@ $^
 
