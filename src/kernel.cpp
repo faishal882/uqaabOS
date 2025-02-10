@@ -4,11 +4,13 @@
 #include "include/drivers/mouse.h"
 #include "include/drivers/pci.h"
 // #include "include/drivers/vga.h"
+#include "include/drivers/storage/ata.h"
 #include "include/gdt.h"
 #include "include/interrupts.h"
 #include "include/libc/stdio.h"
 #include "include/memorymanagement/memorymanagement.h"
 #include "include/multitasking/multitasking.h"
+#include <cstdint>
 
 // Compiler checks
 #if defined(__linux__)
@@ -155,6 +157,25 @@ extern "C" void kernel_main(const void *multiboot_structure,
   // task_manager.add_task(&task2);
   // task_manager.add_task(&task3);
   // task_manager.add_task(&task4);
+
+  uqaabOS::libc::printf("\nS-ATA primary master: ");
+  uqaabOS::driver::ATA ata0m(true, 0x1F0);
+  ata0m.identify();
+
+  uqaabOS::libc::printf("\nS-ATA primary slave: ");
+  uqaabOS::driver::ATA ata0s(false, 0x1F0);
+  ata0s.identify();
+  ata0s.write28(0, (uint8_t *)"Hello World", 25);
+  ata0s.flush();
+  ata0s.read28(0);
+
+  // uqaabOS::libc::printf("\nS-ATA secondary master: ");
+  // uqaabOS::driver::ATA ata1m(true, 0x170);
+  // ata1m.identify();
+
+  // uqaabOS::libc::printf("\nS-ATA secondary slave: ");
+  // uqaabOS::driver::ATA ata1s(false, 0x170);
+  // ata1s.identify();
 
   // Initialize InterruptManager with TaskManager
   uqaabOS::interrupts::InterruptManager interrupt_manager(0x20, &gdt,

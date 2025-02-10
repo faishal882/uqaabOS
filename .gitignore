@@ -1,2 +1,9 @@
 build/
 iso/boot/kernel.bin
+
+# virtual storage disks
+hdd.img
+*.img
+
+# logs
+qemu.log
