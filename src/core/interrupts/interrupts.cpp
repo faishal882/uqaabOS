@@ -104,6 +104,8 @@ InterruptManager::InterruptManager(uint16_t hardware_interrupt_offset,
                     IDT_INTERRUPT_GATE);
   setGateDescriptor(hardware_interrupt_offset + 0x0F, code_segment, &IRQ0x0F, 0,
                     IDT_INTERRUPT_GATE);
+  // System Call
+  setGateDescriptor(0x80, code_segment, &IRQ0x80, 0, IDT_INTERRUPT_GATE);
 
   // handle exceptions(Trap Gate)
   const uint8_t IDT_TRAP_GATE = 0xF;

@@ -75,6 +75,8 @@ HandleInterruptRequest 0x0D      ; IRQ13 - FPU
 HandleInterruptRequest 0x0E      ; IRQ14 - Primary ATA
 HandleInterruptRequest 0x0F      ; IRQ15 - Secondary ATA
 HandleInterruptRequest 0x31      ; Custom IRQ handler
+HandleInterruptRequest 0x80      ; IRQ80 - System Call
+
 
 ; Common interrupt handling code
 int_bottom:

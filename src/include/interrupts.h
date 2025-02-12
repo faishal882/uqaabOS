@@ -32,6 +32,8 @@ static void IRQ0x0E();
 static void IRQ0x0F();
 static void IRQ0x31();
 
+static void IRQ0x80(); // System Call
+
 // Exceptions(eg: 0x00: Divide error Interrupt, 0x01: Debug Interrupt,
 // , 0x06: Invalid Opcode Interrupt etc)
 static void handle_exception0x00();

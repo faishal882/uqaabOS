@@ -10,7 +10,7 @@
 #include "include/libc/stdio.h"
 #include "include/memorymanagement/memorymanagement.h"
 #include "include/multitasking/multitasking.h"
-#include <cstdint>
+#include "include/syscall.h"
 
 // Compiler checks
 #if defined(__linux__)
@@ -67,11 +67,17 @@ public:
   }
 };
 
+void sysprintf(char* str)
+{
+    asm("int $0x80" : : "a" (4), "b" (str));
+}
+
 void taskA() {
   int i = 0;
   while (1) {
     i++;
     uqaabOS::libc::printf("A");
+    sysprintf("a");
     if (i % 10 == 0) {
       asm volatile("int $0x20");
     }
@@ -83,12 +89,14 @@ void taskA() {
 void taskB() {
   for (int i = 0; i < 100000000; i++) {
     uqaabOS::libc::printf("B");
+    sysprintf("b");
     if (i % 10 == 0) {
       asm volatile("int $0x20");
     }
   }
   asm volatile("int $0x20");
 }
+
 
 void taskC() {
   for (int i = 0; i < 100000000; i++) {
@@ -129,32 +137,24 @@ extern "C" void kernel_main(const void *multiboot_structure,
 
   uqaabOS::libc::printf("heap: ");
   uqaabOS::libc::print_hex(heap);
-  // uqaabOS::libc::print_hex((heap >> 24) & 0xFF);
-  // uqaabOS::libc::print_hex((heap >> 16) & 0xFF);
-  // uqaabOS::libc::print_hex((heap >> 8) & 0xFF);
-  // uqaabOS::libc::print_hex((heap) & 0xFF);
 
   void *allocated = memoryManager.malloc(1024);
   uqaabOS::libc::printf("\nallocated: ");
   uqaabOS::libc::print_hex((size_t)allocated);
-  // uqaabOS::libc::print_hex(((size_t)allocated >> 24) & 0xFF);
-  // uqaabOS::libc::print_hex(((size_t)allocated >> 16) & 0xFF);
-  // uqaabOS::libc::print_hex(((size_t)allocated >> 8) & 0xFF);
-  // uqaabOS::libc::print_hex(((size_t)allocated) & 0xFF);
   uqaabOS::libc::printf("\n");
 
   // Initialize TaskManager
   uqaabOS::multitasking::TaskManager task_manager;
 
   // Initialize Task
-  // uqaabOS::multitasking::Task task1(&gdt, taskA);
-  // uqaabOS::multitasking::Task task2(&gdt, taskB);
+  uqaabOS::multitasking::Task task1(&gdt, taskA);
+  uqaabOS::multitasking::Task task2(&gdt, taskB);
   // uqaabOS::multitasking::Task task3(&gdt, taskC);
   // uqaabOS::multitasking::Task task4(&gdt, taskD);
 
   // // Add tasks to task manager
-  // task_manager.add_task(&task1);
-  // task_manager.add_task(&task2);
+  task_manager.add_task(&task1);
+  task_manager.add_task(&task2);
   // task_manager.add_task(&task3);
   // task_manager.add_task(&task4);
 
@@ -180,6 +180,9 @@ extern "C" void kernel_main(const void *multiboot_structure,
   // Initialize InterruptManager with TaskManager
   uqaabOS::interrupts::InterruptManager interrupt_manager(0x20, &gdt,
                                                           &task_manager);
+
+  // Initialize SyscallHandler
+  uqaabOS::syscall::SyscallHandler syscall_handler(&interrupt_manager, 0x80);
 
   uqaabOS::driver::DriverManager driver_manager;
 
