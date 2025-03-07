@@ -1,4 +1,5 @@
 #include "../../include/drivers/storage/ata.h"
+#include <cstdint>
 
 namespace uqaabOS {
 namespace driver {
@@ -78,11 +79,10 @@ void ATA::identify() {
     serial[i * 2 + 1] = (identify_data[10 + i] >> 8);
   }
   libc::printf("Serial Number: %s\n", serial);
-
 }
 
 // read28(): Reads data from a given sector using 28-bit LBA addressing.
-void ATA::read28(uint32_t sector_num, int count) {
+void ATA::read28(uint32_t sector_num, uint8_t *data, uint32_t count) {
   if (sector_num > 0x0FFFFFFF) // Ensure the sector number fits in 28 bits.
     return;
 
@@ -94,7 +94,7 @@ void ATA::read28(uint32_t sector_num, int count) {
   lba_low_port.write(sector_num & 0x000000FF);        // Write the LBA low byte.
   lba_mid_port.write((sector_num & 0x0000FF00) >> 8); // Write the LBA mid byte.
   lba_high_port.write((sector_num & 0x00FF0000) >>
-                     16);   // Write the LBA high byte.
+                      16);  // Write the LBA high byte.
   command_port.write(0x20); // Send the READ command (0x20).
 
   uint8_t status =
@@ -113,15 +113,16 @@ void ATA::read28(uint32_t sector_num, int count) {
 
   // Read the data in 16-bit chunks and print each chunk.
   for (int i = 0; i < count; i += 2) {
-    uint16_t wdata = data_port.read(); // Read a 16-bit word from the data port.
-
-    char *text = "  \0";    // Temporary buffer for output.
-    text[0] = wdata & 0xFF; // Get the lower byte.
+    uint16_t wdata = data_port.read();  // Read the 16-bit word from the port.
+                    
+    char *text = "  \0";               // Temporary buffer for output.
     if (i + 1 < count)
-      text[1] = (wdata >> 8) & 0xFF; // Get the upper byte if within the count.
-    else
-      text[1] = '\0';   // Otherwise, null-terminate the string.
-    libc::printf(text); // Print the two-character string.
+      text[1] = (wdata >> 8) & 0x00FF;   // Extract the upper byte.
+    text[0] = wdata & 0x00FF;     // Extract the lower byte.
+    libc::printf(text);  // Print the two-character string.
+
+    data[i] = wdata & 0x00FF;  // Store the lower byte in the data buffer.
+    data[i + 1] = (wdata >> 8) & 0x00FF; // Store the upper byte if available.
   }
 
   // Read and discard any remaining words to complete a full sector (512 bytes).
@@ -145,7 +146,7 @@ void ATA::write28(uint32_t sector_num, uint8_t *data, uint32_t count) {
   lba_low_port.write(sector_num & 0x000000FF); // Write the LBA low byte.
   lba_mid_port.write((sector_num & 0x0000FF00) >> 8); // Write the LBA mid byte.
   lba_high_port.write((sector_num & 0x00FF0000) >>
-                     16);   // Write the LBA high byte.
+                      16);  // Write the LBA high byte.
   command_port.write(0x30); // Send the WRITE command (0x30).
 
   libc::printf(

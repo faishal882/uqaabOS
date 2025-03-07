@@ -10,6 +10,7 @@
 #include "include/libc/stdio.h"
 #include "include/memorymanagement/memorymanagement.h"
 #include "include/multitasking/multitasking.h"
+#include "include/filesystem/msdospart.h"
 #include <cstdint>
 
 // Compiler checks
@@ -158,23 +159,25 @@ extern "C" void kernel_main(const void *multiboot_structure,
   // task_manager.add_task(&task3);
   // task_manager.add_task(&task4);
 
-  uqaabOS::libc::printf("\nS-ATA primary master: ");
+  uqaabOS::libc::printf("ATA primary master: ");
   uqaabOS::driver::ATA ata0m(true, 0x1F0);
   ata0m.identify();
-
-  uqaabOS::libc::printf("\nS-ATA primary slave: ");
+  
+  uqaabOS::libc::printf("\n ATA primary slave: ");
   uqaabOS::driver::ATA ata0s(false, 0x1F0);
   ata0s.identify();
-  ata0s.write28(0, (uint8_t *)"Hello World", 25);
-  ata0s.flush();
-  ata0s.read28(0);
 
-  // uqaabOS::libc::printf("\nS-ATA secondary master: ");
-  // uqaabOS::driver::ATA ata1m(true, 0x170);
+  uqaabOS::filesystem::MSDOSPartitionTable::read_partitions(&ata0s);
+  // ata0s.write28(0, (uint8_t *)"Hello World", 25);
+  // ata0s.flush();
+  // ata0s.read28(0, 25);
+
+  // uqaabOS::libc::printf("\n ATA secondary master: ");
+  uqaabOS::driver::ATA ata1m(true, 0x170);
   // ata1m.identify();
 
-  // uqaabOS::libc::printf("\nS-ATA secondary slave: ");
-  // uqaabOS::driver::ATA ata1s(false, 0x170);
+  // uqaabOS::libc::printf("\n ATA secondary slave: ");
+  uqaabOS::driver::ATA ata1s(false, 0x170);
   // ata1s.identify();
 
   // Initialize InterruptManager with TaskManager
