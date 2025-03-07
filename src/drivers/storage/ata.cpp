@@ -93,7 +93,7 @@ void ATA::read28(uint32_t sector_num, int count) {
   sector_count_port.write(1); // Set sector count to 1 (reading one sector).
   lba_low_port.write(sector_num & 0x000000FF);        // Write the LBA low byte.
   lba_mid_port.write((sector_num & 0x0000FF00) >> 8); // Write the LBA mid byte.
-  lba_low_port.write((sector_num & 0x00FF0000) >>
+  lba_high_port.write((sector_num & 0x00FF0000) >>
                      16);   // Write the LBA high byte.
   command_port.write(0x20); // Send the READ command (0x20).
 
@@ -144,7 +144,7 @@ void ATA::write28(uint32_t sector_num, uint8_t *data, uint32_t count) {
   sector_count_port.write(1);                  // Set sector count to 1.
   lba_low_port.write(sector_num & 0x000000FF); // Write the LBA low byte.
   lba_mid_port.write((sector_num & 0x0000FF00) >> 8); // Write the LBA mid byte.
-  lba_low_port.write((sector_num & 0x00FF0000) >>
+  lba_high_port.write((sector_num & 0x00FF0000) >>
                      16);   // Write the LBA high byte.
   command_port.write(0x30); // Send the WRITE command (0x30).
 
