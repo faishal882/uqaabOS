@@ -24,13 +24,13 @@ void MSDOSPartitionTable::read_partitions(driver::ATA *hd) {
   // Read the MBR from the hard drive into the mbr variable
   hd->read28(0, (uint8_t *)&mbr, sizeof(MasterBootRecord));
 
-  // RAW printing of MBR
-  for (int i = 0x1BE; i <= 0x01FF; i++) {
-    // Print each byte of the MBR in hexadecimal format
-    libc::print_hex(((uint8_t *)&mbr)[i]);
-    libc::printf(" ");
-  }
-  libc::printf("\n");
+  // // RAW printing of MBR
+  // for (int i = 0x1BE; i <= 0x01FF; i++) {
+  //   // Print each byte of the MBR in hexadecimal format
+  //   libc::print_hex(((uint8_t *)&mbr)[i]);
+  //   libc::printf(" ");
+  // }
+  // libc::printf("\n");
 
   // Check if the MBR's magic number is valid
   if (mbr.magicnumber != 0xAA55) {
