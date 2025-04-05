@@ -11,6 +11,7 @@
 #include "include/memorymanagement/memorymanagement.h"
 #include "include/multitasking/multitasking.h"
 #include "include/filesystem/msdospart.h"
+#include "include/filesystem/fat.h"
 #include <cstdint>
 
 // Compiler checks
@@ -130,18 +131,10 @@ extern "C" void kernel_main(const void *multiboot_structure,
 
   uqaabOS::libc::printf("heap: ");
   uqaabOS::libc::print_hex(heap);
-  // uqaabOS::libc::print_hex((heap >> 24) & 0xFF);
-  // uqaabOS::libc::print_hex((heap >> 16) & 0xFF);
-  // uqaabOS::libc::print_hex((heap >> 8) & 0xFF);
-  // uqaabOS::libc::print_hex((heap) & 0xFF);
 
   void *allocated = memoryManager.malloc(1024);
   uqaabOS::libc::printf("\nallocated: ");
   uqaabOS::libc::print_hex((size_t)allocated);
-  // uqaabOS::libc::print_hex(((size_t)allocated >> 24) & 0xFF);
-  // uqaabOS::libc::print_hex(((size_t)allocated >> 16) & 0xFF);
-  // uqaabOS::libc::print_hex(((size_t)allocated >> 8) & 0xFF);
-  // uqaabOS::libc::print_hex(((size_t)allocated) & 0xFF);
   uqaabOS::libc::printf("\n");
 
   // Initialize TaskManager
@@ -159,26 +152,23 @@ extern "C" void kernel_main(const void *multiboot_structure,
   // task_manager.add_task(&task3);
   // task_manager.add_task(&task4);
 
-  uqaabOS::libc::printf("ATA primary master: ");
+  uqaabOS::libc::printf("\n ATA primary master: ");
   uqaabOS::driver::ATA ata0m(true, 0x1F0);
   ata0m.identify();
   
-  uqaabOS::libc::printf("\n ATA primary slave: ");
-  uqaabOS::driver::ATA ata0s(false, 0x1F0);
-  ata0s.identify();
+  // uqaabOS::libc::printf("\n ATA primary slave: ");
+  // uqaabOS::driver::ATA ata0s(false, 0x1F0);
+  // ata0s.identify();
 
-  uqaabOS::filesystem::MSDOSPartitionTable::read_partitions(&ata0s);
-  // ata0s.write28(0, (uint8_t *)"Hello World", 25);
-  // ata0s.flush();
-  // ata0s.read28(0, 25);
+ // Read partitions
+ uqaabOS::filesystem::MSDOSPartitionTable::read_partitions(&ata0m);
+ uqaabOS::libc::printf("\n");
 
-  // uqaabOS::libc::printf("\n ATA secondary master: ");
-  uqaabOS::driver::ATA ata1m(true, 0x170);
-  // ata1m.identify();
-
-  // uqaabOS::libc::printf("\n ATA secondary slave: ");
-  uqaabOS::driver::ATA ata1s(false, 0x170);
-  // ata1s.identify();
+ // Calculate partition offset in bytes (sector size is typically 512 bytes)
+ uint32_t partition_offset = 2048;
+ // Read the FAT32 filesystem
+ uqaabOS::filesystem::read_bios_parameter_block(&ata0m, partition_offset);
+ uqaabOS::libc::printf("\n \n");
 
   // Initialize InterruptManager with TaskManager
   uqaabOS::interrupts::InterruptManager interrupt_manager(0x20, &gdt,

@@ -83,51 +83,85 @@ void ATA::identify() {
 
 // read28(): Reads data from a given sector using 28-bit LBA addressing.
 void ATA::read28(uint32_t sector_num, uint8_t *data, uint32_t count) {
-  if (sector_num > 0x0FFFFFFF) // Ensure the sector number fits in 28 bits.
-    return;
+  if (sector_num > 0x0FFFFFFF) {
+      libc::printf("ERROR: Sector number out of range.\n");
+      return;
+  }
 
-  // Set the device register with the top 4 bits of LBA and master/slave
-  // selection.
+  if (data == nullptr) {
+      libc::printf("ERROR: Data buffer is null.\n");
+      return;
+  }
+
+  if (count > 512) {
+      libc::printf("ERROR: Count exceeds sector size (512 bytes).\n");
+      return;
+  }
+
+  // Wait for the device to be ready.
+  uint8_t status = command_port.read();
+  while (status & 0x80) { // Wait while the device is busy.
+      status = command_port.read();
+  }
+
+  if (status & 0x01) { // Check for errors.
+      libc::printf("ERROR: Device not ready or error occurred.\n");
+      return;
+  }
+
+  // Set up the device for reading.
   device_port.write((master ? 0xE0 : 0xF0) | ((sector_num & 0x0F000000) >> 24));
-  error_port.write(0);        // Clear the error register.
-  sector_count_port.write(1); // Set sector count to 1 (reading one sector).
-  lba_low_port.write(sector_num & 0x000000FF);        // Write the LBA low byte.
-  lba_mid_port.write((sector_num & 0x0000FF00) >> 8); // Write the LBA mid byte.
-  lba_high_port.write((sector_num & 0x00FF0000) >>
-                      16);  // Write the LBA high byte.
-  command_port.write(0x20); // Send the READ command (0x20).
+  error_port.write(0);
+  sector_count_port.write(1);
+  lba_low_port.write(sector_num & 0x000000FF);
+  lba_mid_port.write((sector_num & 0x0000FF00) >> 8);
+  lba_high_port.write((sector_num & 0x00FF0000) >> 16);
 
-  uint8_t status =
-      command_port.read(); // Read the status after issuing the command.
-  // Wait until the device is ready (not busy) and no error has occurred.
-  while (((status & 0x80) == 0x80) && ((status & 0x01) != 0x01))
-    status = command_port.read();
+  // Add retry logic to handle transient errors:
+  int retries = 3;
+  while (retries > 0) {
+    command_port.write(0x20); // Send the READ command
+    uint8_t status = command_port.read();
+    retries--;
 
-  if (status & 0x01) {     // If an error is indicated...
-    libc::printf("ERROR"); // ...print an error message.
+    if (!(status & 0x01)) { // No error
+        break;
+    }
+
+    libc::printf("WARNING: Retrying read operation. Retries left: %d\n", retries);
+  }
+
+  if (status & 0x01) { // If still an error after retries
+    uint8_t error_code = error_port.read();
+    libc::printf("ERROR: Read failed. Error code: 0x%x\n", error_code);
     return;
   }
 
-  libc::printf(
-      "reading ATA Drive: "); // Inform that data reading is in progress.
-
-  // Read the data in 16-bit chunks and print each chunk.
-  for (int i = 0; i < count; i += 2) {
-    uint16_t wdata = data_port.read();  // Read the 16-bit word from the port.
-                    
-    char *text = "  \0";               // Temporary buffer for output.
-    if (i + 1 < count)
-      text[1] = (wdata >> 8) & 0x00FF;   // Extract the upper byte.
-    text[0] = wdata & 0x00FF;     // Extract the lower byte.
-    libc::printf(text);  // Print the two-character string.
-
-    data[i] = wdata & 0x00FF;  // Store the lower byte in the data buffer.
-    data[i + 1] = (wdata >> 8) & 0x00FF; // Store the upper byte if available.
+  // Wait for the device to complete the operation.
+  status = command_port.read();
+  while ((status & 0x80) && !(status & 0x01)) {
+      status = command_port.read();
   }
 
-  // Read and discard any remaining words to complete a full sector (512 bytes).
-  for (int i = count + (count % 2); i < 512; i += 2)
-    data_port.read();
+  if (status & 0x01) { // If an error occurred...
+      uint8_t error_code = error_port.read();
+      libc::printf("ERROR: Read failed. Error code: 0x%x\n", error_code);
+      return;
+  }
+
+  // Read the data.
+  for (int i = 0; i < count; i += 2) {
+      uint16_t wdata = data_port.read();
+      data[i] = wdata & 0x00FF;
+      if (i + 1 < count) {
+          data[i + 1] = (wdata >> 8) & 0x00FF;
+      }
+  }
+
+  // Discard remaining words if count < 512.
+  for (int i = count + (count % 2); i < 512; i += 2) {
+      data_port.read();
+  }
 }
 
 // write28(): Writes data to a given sector using 28-bit LBA addressing.

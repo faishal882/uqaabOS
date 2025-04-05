@@ -22,33 +22,16 @@ void read_bios_parameter_block(driver::ATA *hd,
       partition_offset, (uint8_t *)&bpb,
       sizeof(BiosParameterBlock32)); // Read the BPB from the first sector of
                                      // the partition into the `bpb` structure.
-
-  /*
-  for(int i=0x00; i<sizeof(BiosParameterBlock32); i++)
-  {
-   printfHex(((uint8_t*)&bpb)[i]);
-   printf(" ");
-  }
-  printf("\n");
-  */
-
+                                     
   uint32_t fat_start =
-      partition_offset +
-      bpb.reserved_sectors; // Calculate the starting sector of the FAT table.
-  uint32_t fat_size =
-      bpb.table_size; // Get the size of a single FAT table in sectors.
+      partition_offset + bpb.reserved_sectors; // Calculate the starting sector of the FAT table.
+  uint32_t fat_size = bpb.table_size; // Get the size of a single FAT table in sectors.
   uint32_t data_start =
-      fat_start +
-      fat_size *
-          bpb.fat_copies; // Calculate the starting sector of the data region.
+      fat_start + (fat_size * bpb.fat_copies); // Calculate the starting sector of the data region.
   uint32_t root_start =
-      data_start +
-      bpb.sector_per_cluster *
-          (bpb.root_cluster -
-           2); // Calculate the starting sector of the root directory.
+      data_start + (bpb.sector_per_cluster * (bpb.root_cluster - 2)); // Calculate the starting sector of the root directory.
 
-  DirectoryEntryFat32
-      dirent[16]; // Array to hold directory entries (16 entries at a time).
+  DirectoryEntryFat32 dirent[16]; // Array to hold directory entries (16 entries at a time).
 
   hd->read28(
       root_start, (uint8_t *)&dirent[0],
