@@ -3,5 +3,8 @@
     "cstdarg": "cpp",
   },
   "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
-  "editor.formatOnSave": false
+  "editor.formatOnSave": false,
+  "[cpp]": {
+    "editor.defaultFormatter": "ms-vscode.cpptools"
+  }
 }
