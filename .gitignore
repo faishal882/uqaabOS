@@ -7,3 +7,11 @@ hdd.img
 
 # logs
 qemu.log
+
+# vs code
+.vscode/
+.vscode-test/
+# ctags
+tags
+# cscope
+cscope.*
