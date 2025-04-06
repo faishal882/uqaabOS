@@ -1,5 +1,4 @@
 #include "../include/libc/stdio.h"
-#include <stdarg.h> // Include for va_list, va_start, va_arg, va_end
 
 namespace uqaabOS {
 namespace libc {
@@ -9,6 +8,24 @@ static int cursor_pos = 0;
 const int SCREEN_WIDTH = 80;
 const int SCREEN_HEIGHT = 25;
 const int SCREEN_SIZE = SCREEN_WIDTH * SCREEN_HEIGHT;
+
+// Write a byte to a port
+void outb(uint16_t port, uint8_t data) {
+    __asm__ volatile ("outb %0, %1" : : "a"(data), "Nd"(port));
+}
+
+void update_hw_cursor(int x, int y) {
+  // Calculate the cursor's position in the VGA text buffer
+  uint16_t cursorLocation = y * SCREEN_WIDTH + x;
+
+  // Send the high byte of the cursor location to the VGA control register
+  outb(0x3D4, 0x0E); 
+  outb(0x3D5, (cursorLocation >> 8) & 0xFF);
+
+  // Send the low byte of the cursor location to the VGA control register
+  outb(0x3D4, 0x0F); 
+  outb(0x3D5, cursorLocation & 0xFF);
+}
 
 // Scrolls the screen content up by one line
 void scroll_screen() {
@@ -40,11 +57,9 @@ void putchar(char c) {
     // Handle regular printable characters
     else if (c >= ' ') {
         // If cursor is already at or beyond the screen limit before printing, scroll first.
-        // This case might happen if the previous operation left the cursor exactly at SCREEN_SIZE.
         if (cursor_pos >= SCREEN_SIZE) {
-             scroll_screen();
-             // Adjust cursor position back by one line after scroll
-             cursor_pos -= SCREEN_WIDTH;
+            scroll_screen();
+            cursor_pos -= SCREEN_WIDTH;
         }
 
         video[cursor_pos * 2] = c;
@@ -52,17 +67,8 @@ void putchar(char c) {
         cursor_pos++;
     }
 
-    // If cursor is now off screen (at or past SCREEN_SIZE) after handling newline or printing a char, scroll.
-    if (cursor_pos >= SCREEN_SIZE) {
-        scroll_screen();
-        // Adjust cursor position back by one line width.
-        // This places the cursor at the correct position on the new last line.
-        cursor_pos -= SCREEN_WIDTH;
-    }
-
-    // TODO: Update the hardware cursor position if you have that implemented.
-    // This usually involves writing to I/O ports 0x3D4 and 0x3D5.
-    // Example: update_hw_cursor(cursor_pos % SCREEN_WIDTH, cursor_pos / SCREEN_WIDTH);
+    // Update the hardware cursor position
+    update_hw_cursor(cursor_pos % SCREEN_WIDTH, cursor_pos / SCREEN_WIDTH);
 }
 
 void puts(const char *str) {
@@ -173,5 +179,6 @@ void printf(const char *format, ...) {
 
   va_end(args);
 }
+
 } // namespace libc
 } // namespace uqaabOS
