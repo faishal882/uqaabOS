@@ -48,11 +48,13 @@ void putchar(char c) {
     if (c == '\n') {
         cursor_pos += SCREEN_WIDTH - (cursor_pos % SCREEN_WIDTH);
     }
-    // Handle backspace character (optional, basic implementation)
-    else if (c == '\b' && cursor_pos > 0) {
-        cursor_pos--;
-        video[cursor_pos * 2] = ' ';
-        video[cursor_pos * 2 + 1] = 0x07;
+    // Handle backspace character
+    else if (c == '\b') {
+        if (cursor_pos > 0) {
+            cursor_pos--; // Move cursor back
+            video[cursor_pos * 2] = ' '; // Clear the character at the cursor position
+            video[cursor_pos * 2 + 1] = 0x07; // Reset to default attribute (white on black)
+        }
     }
     // Handle regular printable characters
     else if (c >= ' ') {
