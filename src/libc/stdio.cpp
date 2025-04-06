@@ -1,19 +1,68 @@
 #include "../include/libc/stdio.h"
+#include <stdarg.h> // Include for va_list, va_start, va_arg, va_end
 
 namespace uqaabOS {
 namespace libc {
 // VGA text buffer address
 volatile char *video = (volatile char *)0xB8000;
 static int cursor_pos = 0;
+const int SCREEN_WIDTH = 80;
+const int SCREEN_HEIGHT = 25;
+const int SCREEN_SIZE = SCREEN_WIDTH * SCREEN_HEIGHT;
+
+// Scrolls the screen content up by one line
+void scroll_screen() {
+    // Copy content of lines 1 to SCREEN_HEIGHT-1 up to lines 0 to SCREEN_HEIGHT-2
+    for (int pos = 0; pos < (SCREEN_HEIGHT - 1) * SCREEN_WIDTH; ++pos) {
+        video[pos * 2] = video[(pos + SCREEN_WIDTH) * 2];
+        video[pos * 2 + 1] = video[(pos + SCREEN_WIDTH) * 2 + 1];
+    }
+
+    // Clear the last line
+    int last_line_start_index = (SCREEN_HEIGHT - 1) * SCREEN_WIDTH;
+    for (int x = 0; x < SCREEN_WIDTH; ++x) {
+        video[(last_line_start_index + x) * 2] = ' '; // Clear character
+        video[(last_line_start_index + x) * 2 + 1] = 0x07; // Default attribute (white on black)
+    }
+}
 
 void putchar(char c) {
-  if (c == '\n') {
-    cursor_pos += 80 - (cursor_pos % 80);
-  } else {
-    video[cursor_pos * 2] = c;
-    video[cursor_pos * 2 + 1] = 0x07;
-    cursor_pos++;
-  }
+    // Handle newline character
+    if (c == '\n') {
+        cursor_pos += SCREEN_WIDTH - (cursor_pos % SCREEN_WIDTH);
+    }
+    // Handle backspace character (optional, basic implementation)
+    else if (c == '\b' && cursor_pos > 0) {
+        cursor_pos--;
+        video[cursor_pos * 2] = ' ';
+        video[cursor_pos * 2 + 1] = 0x07;
+    }
+    // Handle regular printable characters
+    else if (c >= ' ') {
+        // If cursor is already at or beyond the screen limit before printing, scroll first.
+        // This case might happen if the previous operation left the cursor exactly at SCREEN_SIZE.
+        if (cursor_pos >= SCREEN_SIZE) {
+             scroll_screen();
+             // Adjust cursor position back by one line after scroll
+             cursor_pos -= SCREEN_WIDTH;
+        }
+
+        video[cursor_pos * 2] = c;
+        video[cursor_pos * 2 + 1] = 0x07; // Default attribute (white on black)
+        cursor_pos++;
+    }
+
+    // If cursor is now off screen (at or past SCREEN_SIZE) after handling newline or printing a char, scroll.
+    if (cursor_pos >= SCREEN_SIZE) {
+        scroll_screen();
+        // Adjust cursor position back by one line width.
+        // This places the cursor at the correct position on the new last line.
+        cursor_pos -= SCREEN_WIDTH;
+    }
+
+    // TODO: Update the hardware cursor position if you have that implemented.
+    // This usually involves writing to I/O ports 0x3D4 and 0x3D5.
+    // Example: update_hw_cursor(cursor_pos % SCREEN_WIDTH, cursor_pos / SCREEN_WIDTH);
 }
 
 void puts(const char *str) {
@@ -25,14 +74,31 @@ void puts(const char *str) {
 void print_int(int num) {
   char buffer[16];
   int i = 0;
+  bool is_negative = false;
+
+  if (num == 0) {
+    putchar('0');
+    return;
+  }
+
   if (num < 0) {
-    putchar('-');
+    is_negative = true;
+    // Handle potential overflow for INT_MIN
+    if (num == -2147483648) {
+         puts("-2147483648");
+         return;
+    }
     num = -num;
   }
-  do {
+
+  while (num > 0) {
     buffer[i++] = '0' + (num % 10);
     num /= 10;
-  } while (num > 0);
+  }
+
+  if (is_negative) {
+      putchar('-');
+  }
 
   while (i > 0) {
     putchar(buffer[--i]);
@@ -43,11 +109,20 @@ void print_hex(uint32_t num) {
   char buffer[16];
   int i = 0;
   puts("0x");
+
+  if (num == 0) {
+      putchar('0');
+      return;
+  }
+
   do {
     int digit = num % 16;
     buffer[i++] = (digit < 10) ? ('0' + digit) : ('A' + (digit - 10));
     num /= 16;
   } while (num > 0);
+
+  // Print leading zeros if needed for fixed width, e.g., 8 hex digits
+  // while(i < 8) buffer[i++] = '0';
 
   while (i > 0) {
     putchar(buffer[--i]);
@@ -62,9 +137,15 @@ void printf(const char *format, ...) {
     if (*format == '%') {
       format++;
       switch (*format) {
-      case 's':
-        puts(va_arg(args, char *));
+      case 's': {
+        char *s = va_arg(args, char *);
+        if (s == nullptr) { // Handle null pointers gracefully
+            puts("(null)");
+        } else {
+            puts(s);
+        }
         break;
+      }
       case 'd':
         print_int(va_arg(args, int));
         break;
@@ -72,13 +153,16 @@ void printf(const char *format, ...) {
         print_hex(va_arg(args, uint32_t));
         break;
       case 'c':
+        // char is promoted to int when passed through ...
         putchar((char)va_arg(args, int));
         break;
       case '%':
         putchar('%');
         break;
       default:
-        putchar('?');
+        // Print unknown format specifier literally
+        putchar('%');
+        putchar(*format);
         break;
       }
     } else {
