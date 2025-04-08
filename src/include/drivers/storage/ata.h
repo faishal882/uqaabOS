@@ -21,6 +21,7 @@ namespace driver {
 class ATA {
 protected:
   bool master; // Boolean flag indicating if the device is the master drive.
+  uint16_t bytes_per_sector; // Number of bytes per sector (default 512).
   include::Port16Bit data_port; // 16-bit data port for data transfers(0x1F0/0x170).
   include::Port8Bit error_port; // 8-bit error port for error reporting(0x1F1/0x171).
   include::Port8Bit
@@ -46,7 +47,10 @@ public:
 
   // Reads one sector (default 512 bytes) from the device using 28-bit LBA
   // addressing.
-  void read28(uint32_t sector_num, int count = 512);
+  // void read28(uint32_t sector_num, int count = 512);
+  
+  // Reads data from one sector of the device using 28-bit LBA addressing.
+  void read28(uint32_t sector_num, uint8_t* data, uint32_t count);
 
   // Writes data to one sector of the device using 28-bit LBA addressing.
   void write28(uint32_t sector_num, uint8_t *data, uint32_t count);

@@ -71,16 +71,21 @@ $(BUILD_DIR)/pci.o: $(SRC_DIR)/drivers/pci.cpp
 
 $(BUILD_DIR)/ata.o: $(SRC_DIR)/drivers/storage/ata.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
+	
+$(BUILD_DIR)/msdospart.o: $(SRC_DIR)/filesystem/msdospart.cpp
+	$(CC) $(CFLAGS) -c $< -o $@
 
-
+$(BUILD_DIR)/fat.o: $(SRC_DIR)/filesystem/fat.cpp
+	$(CC) $(CFLAGS) -c $< -o $@
 
 # Link kernel binary
 $(BUILD_DIR)/kernel.bin: $(BUILD_DIR)/kernel.o $(BUILD_DIR)/multiboot.o             \
 	                     $(BUILD_DIR)/gdt.o $(BUILD_DIR)/stdio.o                     \
+						 $(BUILD_DIR)/multitasking.o $(BUILD_DIR)/memorymanagement.o \
 						 $(BUILD_DIR)/interrupts.o $(BUILD_DIR)/interruptstub.o $(BUILD_DIR)/port.o \
 						 $(BUILD_DIR)/driver.o   $(BUILD_DIR)/pci.o $(BUILD_DIR)/vga.o\
 						 $(BUILD_DIR)/keyboard.o $(BUILD_DIR)/mouse.o   $(BUILD_DIR)/ata.o \
-						 $(BUILD_DIR)/multitasking.o $(BUILD_DIR)/memorymanagement.o \
+						 $(BUILD_DIR)/msdospart.o  $(BUILD_DIR)/fat.o \
 
 	$(LD) $(LDFLAGS) -o $@ $^
 
