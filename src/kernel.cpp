@@ -11,7 +11,7 @@
 #include "include/memorymanagement/memorymanagement.h"
 #include "include/multitasking/multitasking.h"
 #include "include/filesystem/msdospart.h"
-#include "include/filesystem/fat.h"
+#include "include/filesystem/fat32.h"
 #include <cstdint>
 
 // Compiler checks
@@ -164,10 +164,40 @@ extern "C" void kernel_main(const void *multiboot_structure,
  uqaabOS::filesystem::MSDOSPartitionTable::read_partitions(&ata0m);
  uqaabOS::libc::printf("\n");
 
- // Calculate partition offset in bytes (sector size is typically 512 bytes)
- uint32_t partition_offset = 2048;
- // Read the FAT32 filesystem
- uqaabOS::filesystem::read_bios_parameter_block(&ata0m, partition_offset);
+ // Test our new FAT32 implementation
+ uint32_t fat32_lba = uqaabOS::filesystem::MSDOSPartitionTable::get_first_fat32_partition_lba(&ata0m);
+ if (fat32_lba == 0) {
+     uqaabOS::libc::printf("No FAT32 partition found or invalid MBR\n");
+ } else {
+     uqaabOS::libc::printf("Found FAT32 partition at LBA: ");
+     uqaabOS::libc::print_hex(fat32_lba);
+     uqaabOS::libc::printf("\n");
+     
+     uqaabOS::filesystem::FAT32 fat32(&ata0m, fat32_lba);
+     if (fat32.initialize()) {
+         uqaabOS::libc::printf("FAT32 filesystem initialized successfully\n");
+         uqaabOS::libc::printf("Root directory contents:\n");
+         fat32.list_root();
+         
+         // Try to open and read a file
+         int fd = fat32.open("HELLO.TXT");
+         if (fd > 0) {
+             uqaabOS::libc::printf("Opened HELLO.TXT successfully\n");
+             uint8_t buffer[512];
+             int bytes = fat32.read(fd, buffer, 512);
+             if (bytes > 0) {
+                 buffer[bytes] = '\0';
+                 uqaabOS::libc::printf("Read %d bytes from TEST.TXT:\n", bytes);
+                 uqaabOS::libc::printf((char*)buffer);
+             }
+             fat32.close(fd);
+         } else {
+             uqaabOS::libc::printf("Failed to open HELLO.TXT\n");
+         }
+     } else {
+         uqaabOS::libc::printf("Failed to initialize FAT32 filesystem\n");
+     }
+ }
  uqaabOS::libc::printf("\n \n");
 
   // Initialize InterruptManager with TaskManager

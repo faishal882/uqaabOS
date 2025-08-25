@@ -56,5 +56,30 @@ void MSDOSPartitionTable::read_partitions(driver::ATA *hd) {
   }
 }
 
+uint32_t MSDOSPartitionTable::get_first_fat32_partition_lba(driver::ATA *hd) {
+  MasterBootRecord mbr;
+
+  // Read the MBR from the hard drive into the mbr variable
+  hd->read28(0, (uint8_t *)&mbr, sizeof(MasterBootRecord));
+
+  // Check if the MBR's magic number is valid
+  if (mbr.magicnumber != 0xAA55) {
+    // Return 0 if the MBR is invalid
+    return 0;
+  }
+
+  // Look for the first FAT32 partition (type 0x0B or 0x0C)
+  for (int i = 0; i < 4; i++) {
+    // FAT32 partition types
+    if (mbr.primary_partitions[i].partition_id == 0x0B ||
+        mbr.primary_partitions[i].partition_id == 0x0C) {
+      return mbr.primary_partitions[i].start_lba;
+    }
+  }
+
+  // If no FAT32 partition found, return 0
+  return 0;
+}
+
 } // namespace filesystem
 } // namespace uqaabOS

@@ -8,14 +8,13 @@ GRUB_MKRESCUE=grub-mkrescue
 SRC_DIR=src
 BUILD_DIR=build
 ISO_DIR=iso
-# KERNEL=$(BUILD_DIR)/kernel.bin
 
 # Compiler and linker flags
 CFLAGS = -g -ffreestanding -fno-exceptions -fno-rtti -nostdlib -nostartfiles -nodefaultlibs
 LDFLAGS=-T linker.ld -nostdlib   
 
 # All target
-all: $(KERNEL) iso
+all: $(BUILD_DIR)/kernel.bin iso
 
 # Use compile multiboot.asm to multiboot.o
 $(BUILD_DIR)/multiboot.o: $(SRC_DIR)/multiboot.asm
@@ -35,14 +34,19 @@ $(BUILD_DIR)/kernel.o: $(SRC_DIR)/kernel.cpp
 $(BUILD_DIR)/stdio.o: $(SRC_DIR)/libc/stdio.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
+# Compile string.cpp to object file
+$(BUILD_DIR)/string.o: $(SRC_DIR)/libc/string.cpp
+	$(CC) $(CFLAGS) -c $< -o $@
+
 # Compile gdt.cpp to object file
 $(BUILD_DIR)/gdt.o: $(SRC_DIR)/core/gdt.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/multitasking.o: $(SRC_DIR)/multitasking/multitasking.cpp 
+# Compile multitasking.cpp to object file
+$(BUILD_DIR)/multitasking.o: $(SRC_DIR)/multitasking/multitasking.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# memory management files
+# Compile memorymanagement.cpp to object file
 $(BUILD_DIR)/memorymanagement.o: $(SRC_DIR)/memorymanagement/memorymanagement.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
@@ -50,42 +54,54 @@ $(BUILD_DIR)/memorymanagement.o: $(SRC_DIR)/memorymanagement/memorymanagement.cp
 $(BUILD_DIR)/interrupts.o: $(SRC_DIR)/core/interrupts/interrupts.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/port.o: $(SRC_DIR)/core/port.cpp 
+# Compile port.cpp to object file
+$(BUILD_DIR)/port.o: $(SRC_DIR)/core/port.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
-#compile drivers
-$(BUILD_DIR)/keyboard.o: $(SRC_DIR)/drivers/keyboard.cpp 
+# Compile driver.cpp to object file
+$(BUILD_DIR)/driver.o: $(SRC_DIR)/drivers/driver.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/mouse.o: $(SRC_DIR)/drivers/mouse.cpp 
+# Compile pci.cpp to object file
+$(BUILD_DIR)/pci.o: $(SRC_DIR)/drivers/pci.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/vga.o: $(SRC_DIR)/drivers/vga.cpp 
+# Compile vga.cpp to object file
+$(BUILD_DIR)/vga.o: $(SRC_DIR)/drivers/vga.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/driver.o: $(SRC_DIR)/drivers/driver.cpp 
+# Compile keyboard.cpp to object file
+$(BUILD_DIR)/keyboard.o: $(SRC_DIR)/drivers/keyboard.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/pci.o: $(SRC_DIR)/drivers/pci.cpp 
+# Compile mouse.cpp to object file
+$(BUILD_DIR)/mouse.o: $(SRC_DIR)/drivers/mouse.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
+# Compile ata.cpp to object file
 $(BUILD_DIR)/ata.o: $(SRC_DIR)/drivers/storage/ata.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
-	
+
+# Compile msdospart.cpp to object file
 $(BUILD_DIR)/msdospart.o: $(SRC_DIR)/filesystem/msdospart.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
+# Compile fat.cpp to object file
 $(BUILD_DIR)/fat.o: $(SRC_DIR)/filesystem/fat.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
+# Compile fat32.cpp to object file
+$(BUILD_DIR)/fat32.o: $(SRC_DIR)/filesystem/fat32.cpp
+	$(CC) $(CFLAGS) -c $< -o $@
+
 # Link kernel binary
-$(BUILD_DIR)/kernel.bin: $(BUILD_DIR)/kernel.o $(BUILD_DIR)/multiboot.o             \
-	                     $(BUILD_DIR)/gdt.o $(BUILD_DIR)/stdio.o                     \
-						 $(BUILD_DIR)/multitasking.o $(BUILD_DIR)/memorymanagement.o \
-						 $(BUILD_DIR)/interrupts.o $(BUILD_DIR)/interruptstub.o $(BUILD_DIR)/port.o \
-						 $(BUILD_DIR)/driver.o   $(BUILD_DIR)/pci.o $(BUILD_DIR)/vga.o\
-						 $(BUILD_DIR)/keyboard.o $(BUILD_DIR)/mouse.o   $(BUILD_DIR)/ata.o \
-						 $(BUILD_DIR)/msdospart.o  $(BUILD_DIR)/fat.o \
+$(BUILD_DIR)/kernel.bin: $(BUILD_DIR)/kernel.o $(BUILD_DIR)/multiboot.o \
+                     $(BUILD_DIR)/gdt.o $(BUILD_DIR)/stdio.o $(BUILD_DIR)/string.o \
+					 $(BUILD_DIR)/multitasking.o $(BUILD_DIR)/memorymanagement.o \
+					 $(BUILD_DIR)/interrupts.o $(BUILD_DIR)/interruptstub.o $(BUILD_DIR)/port.o \
+					 $(BUILD_DIR)/driver.o $(BUILD_DIR)/pci.o $(BUILD_DIR)/vga.o \
+					 $(BUILD_DIR)/keyboard.o $(BUILD_DIR)/mouse.o $(BUILD_DIR)/ata.o \
+					 $(BUILD_DIR)/msdospart.o $(BUILD_DIR)/fat.o $(BUILD_DIR)/fat32.o
 
 	$(LD) $(LDFLAGS) -o $@ $^
 

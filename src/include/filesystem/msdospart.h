@@ -43,6 +43,7 @@ namespace uqaabOS
         {
             public:
                 static void read_partitions(driver::ATA *hd); // Static method to read partitions from an ATA hard drive
+                static uint32_t get_first_fat32_partition_lba(driver::ATA *hd); // Get LBA of first FAT32 partition
         };
     }
 }
