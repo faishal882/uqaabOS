@@ -44,6 +44,7 @@ private:
     bool find_file_in_root(const char* name, DirectoryEntryFat32* entry);
     uint32_t cluster_to_lba(uint32_t cluster);
     bool read_sector(uint32_t lba, uint8_t* buffer);
+    bool strcasecmp(const char* str1, const char* str2); // Case-insensitive string comparison
     
 public:
     // Constructor

@@ -84,6 +84,25 @@ bool FAT32::read_cluster(uint32_t cluster, uint8_t* buffer) {
     return true;
 }
 
+// Helper function for case-insensitive string comparison
+bool FAT32::strcasecmp(const char* str1, const char* str2) {
+    while (*str1 && *str2) {
+        char c1 = *str1;
+        char c2 = *str2;
+        
+        // Convert to lowercase
+        if (c1 >= 'A' && c1 <= 'Z') c1 = c1 - 'A' + 'a';
+        if (c2 >= 'A' && c2 <= 'Z') c2 = c2 - 'A' + 'a';
+        
+        if (c1 != c2) return false;
+        
+        str1++;
+        str2++;
+    }
+    
+    return *str1 == *str2; // Both should be null at the end
+}
+
 bool FAT32::find_file_in_root(const char* name, DirectoryEntryFat32* entry) {
     // Buffer to hold directory cluster data
     uint8_t buffer[512 * 32]; // Assuming max 32 sectors per cluster
@@ -114,7 +133,7 @@ bool FAT32::find_file_in_root(const char* name, DirectoryEntryFat32* entry) {
                 continue;
             }
             
-            // Format the entry name to compare with
+            // Format the entry name
             char entry_name[13]; // 8.3 name + null terminator
             int name_len = 0;
             
@@ -135,8 +154,8 @@ bool FAT32::find_file_in_root(const char* name, DirectoryEntryFat32* entry) {
             
             entry_name[name_len] = '\0';
             
-            // Compare with requested name (case insensitive comparison would be better)
-            if (libc::strcmp(entry_name, name) == 0) {
+            // Compare with requested name (case insensitive comparison)
+            if (strcasecmp(entry_name, name)) {
                 *entry = dir_entry[i];
                 return true;
             }

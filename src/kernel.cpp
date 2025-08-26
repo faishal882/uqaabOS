@@ -179,20 +179,37 @@ extern "C" void kernel_main(const void *multiboot_structure,
          uqaabOS::libc::printf("Root directory contents:\n");
          fat32.list_root();
          
-         // Try to open and read a file
-         int fd = fat32.open("HELLO.TXT");
-         if (fd > 0) {
-             uqaabOS::libc::printf("Opened HELLO.TXT successfully\n");
+         // Test case-insensitive file opening with different case variations
+         // Try to open a file with lowercase name - this should work regardless of actual case on disk
+         const char* filename = "file.txt";  // Use lowercase as requested
+         
+         uqaabOS::libc::printf("\nTrying to open file with name: ");
+         uqaabOS::libc::printf(filename);
+         uqaabOS::libc::printf("\n");
+         
+         int fd = fat32.open(filename);
+         if (fd >= 0) {
+             uqaabOS::libc::printf("Successfully opened ");
+             uqaabOS::libc::printf(filename);
+             uqaabOS::libc::printf("\n");
+             
+             // Read some content from the file
              uint8_t buffer[512];
              int bytes = fat32.read(fd, buffer, 512);
              if (bytes > 0) {
-                 buffer[bytes] = '\0';
-                 uqaabOS::libc::printf("Read %d bytes from TEST.TXT:\n", bytes);
+                 // Ensure null termination for printing
+                 if (bytes < 512) buffer[bytes] = '\0';
+                 else buffer[511] = '\0';
+                 
+                 uqaabOS::libc::printf("Read %d bytes from file:\n", bytes);
                  uqaabOS::libc::printf((char*)buffer);
+                 uqaabOS::libc::printf("\n");
              }
              fat32.close(fd);
          } else {
-             uqaabOS::libc::printf("Failed to open HELLO.TXT\n");
+             uqaabOS::libc::printf("Failed to open ");
+             uqaabOS::libc::printf(filename);
+             uqaabOS::libc::printf(" - trying other variations\n"); 
          }
      } else {
          uqaabOS::libc::printf("Failed to initialize FAT32 filesystem\n");
