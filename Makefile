@@ -86,10 +86,6 @@ $(BUILD_DIR)/ata.o: $(SRC_DIR)/drivers/storage/ata.cpp
 $(BUILD_DIR)/msdospart.o: $(SRC_DIR)/filesystem/msdospart.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Compile fat.cpp to object file
-$(BUILD_DIR)/fat.o: $(SRC_DIR)/filesystem/fat.cpp
-	$(CC) $(CFLAGS) -c $< -o $@
-
 # Compile fat32.cpp to object file
 $(BUILD_DIR)/fat32.o: $(SRC_DIR)/filesystem/fat32.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -101,7 +97,7 @@ $(BUILD_DIR)/kernel.bin: $(BUILD_DIR)/kernel.o $(BUILD_DIR)/multiboot.o \
 					 $(BUILD_DIR)/interrupts.o $(BUILD_DIR)/interruptstub.o $(BUILD_DIR)/port.o \
 					 $(BUILD_DIR)/driver.o $(BUILD_DIR)/pci.o $(BUILD_DIR)/vga.o \
 					 $(BUILD_DIR)/keyboard.o $(BUILD_DIR)/mouse.o $(BUILD_DIR)/ata.o \
-					 $(BUILD_DIR)/msdospart.o $(BUILD_DIR)/fat.o $(BUILD_DIR)/fat32.o
+					 $(BUILD_DIR)/msdospart.o $(BUILD_DIR)/fat32.o
 
 	$(LD) $(LDFLAGS) -o $@ $^
 
