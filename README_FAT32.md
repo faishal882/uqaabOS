@@ -1,76 +1,51 @@
-# FAT32 Filesystem Driver for uqaabOS
+# FAT32 Filesystem Implementation
 
-This document describes the FAT32 filesystem driver implementation for uqaabOS.
+This document describes the FAT32 filesystem implementation in uqaabOS, with special focus on the enhanced file opening functionality.
 
-## Features
+## Enhanced File Opening
 
-- Read-only FAT32 filesystem support
-- 8.3 filename format support
-- File reading and directory listing
-- No dynamic memory allocation (uses stack/static buffers)
-- Compatible with existing ATA PIO driver
+The `open` function in the FAT32 class has been enhanced to support opening files in subdirectories, not just in the root directory.
 
-## API
-
-### Constructor
-```cpp
-FAT32(driver::ATA* disk, uint32_t partition_lba)
-```
-Initializes a FAT32 driver instance with the specified ATA device and partition LBA.
-
-### initialize()
-```cpp
-bool initialize()
-```
-Reads and validates the BIOS Parameter Block (BPB) and calculates filesystem layout.
-
-### open()
-```cpp
-int open(const char* path)
-```
-Opens a file and returns a file descriptor. Only supports root directory files with 8.3 names.
-
-### read()
-```cpp
-int read(int fd, uint8_t* buf, uint32_t size)
-```
-Reads data from an open file.
-
-### close()
-```cpp
-void close(int fd)
-```
-Closes an open file.
-
-### list_root()
-```cpp
-void list_root()
-```
-Lists all files in the root directory.
-
-## Usage Example
+### Usage Examples
 
 ```cpp
-uqaabOS::filesystem::FAT32 fat32(&ata_primary, partition_lba);
-if (fat32.initialize()) {
-    fat32.list_root();
-    int fd = fat32.open("HELLO.TXT");
-    if (fd > 0) {
-        uint8_t buffer[512];
-        int bytes = fat32.read(fd, buffer, 512);
-        buffer[bytes] = '\0';
-        libc::printf((char*)buffer);
-        fat32.close(fd);
-    }
-}
+// Open a file in the root directory (original functionality)
+int fd1 = fat32.open("test.txt");
+
+// Open a file in a subdirectory (new functionality)
+int fd2 = fat32.open("/test/file.txt");
+
+// Open a file in a nested subdirectory (new functionality)
+int fd3 = fat32.open("/documents/reports/2023/report.txt");
 ```
 
-## Implementation Details
+### Path Format
 
-The driver implements the following FAT32 structures:
-- BIOS Parameter Block (BPB)
-- Directory entries
-- File allocation table traversal
-- Cluster chaining
+The function supports both absolute paths (starting with '/') and relative paths (though relative paths are treated as absolute from the root).
 
-The implementation uses only stack and static buffers to avoid dynamic memory allocation.
+- `/file.txt` - File in the root directory
+- `/dir/file.txt` - File in a subdirectory
+- `/dir1/dir2/file.txt` - File in a nested subdirectory
+
+### Return Values
+
+- Returns a file descriptor (non-negative integer) on success
+- Returns -1 on failure (file not found, directory not found, path is a directory, etc.)
+
+### Limitations
+
+- Does not support relative paths from current directory (all paths are treated as absolute from root)
+- Does not support paths with "." or ".." components
+- Maximum path depth is limited by the filesystem structure
+
+## Other Functions
+
+The FAT32 implementation also includes:
+
+- `ls(path)` - List files in a directory
+- `mkdir(path)` - Create a new directory
+- `touch(path)` - Create a new empty file
+- `rm(path)` - Remove a file
+- `rmdir(path)` - Remove a directory
+
+All of these functions also support subdirectory paths in the same format as the `open` function.

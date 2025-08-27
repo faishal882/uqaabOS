@@ -21,6 +21,10 @@ UqaabOS is a foundational operating system developed entirely from scratch, adhe
 ### 🏗 System Architecture
 - **Multitasking Support**
 
+### 📁 File System
+- **FAT32 Support** with subdirectory file operations
+- See [FAT32 Documentation](README_FAT32.md) for details
+
 ## 🛠 Technology Stack
 
 ### 💻 Programming Languages

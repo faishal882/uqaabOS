@@ -89,6 +89,18 @@ $(BUILD_DIR)/msdospart.o: $(SRC_DIR)/filesystem/msdospart.cpp
 # Compile fat32.cpp to object file
 $(BUILD_DIR)/fat32.o: $(SRC_DIR)/filesystem/fat32.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
+	
+# Compile fat32_operations.cpp to object file
+$(BUILD_DIR)/fat32_operations.o: $(SRC_DIR)/filesystem/fat32_operations.cpp
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Compile fat32_path_helpers.cpp to object file
+$(BUILD_DIR)/fat32_path_helpers.o: $(SRC_DIR)/filesystem/fat32_path_helpers.cpp
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Compile fat32_write_helpers.cpp to object file
+$(BUILD_DIR)/fat32_write_helpers.o: $(SRC_DIR)/filesystem/fat32_write_helpers.cpp
+	$(CC) $(CFLAGS) -c $< -o $@
 
 # Link kernel binary
 $(BUILD_DIR)/kernel.bin: $(BUILD_DIR)/kernel.o $(BUILD_DIR)/multiboot.o \
@@ -97,7 +109,8 @@ $(BUILD_DIR)/kernel.bin: $(BUILD_DIR)/kernel.o $(BUILD_DIR)/multiboot.o \
 					 $(BUILD_DIR)/interrupts.o $(BUILD_DIR)/interruptstub.o $(BUILD_DIR)/port.o \
 					 $(BUILD_DIR)/driver.o $(BUILD_DIR)/pci.o $(BUILD_DIR)/vga.o \
 					 $(BUILD_DIR)/keyboard.o $(BUILD_DIR)/mouse.o $(BUILD_DIR)/ata.o \
-					 $(BUILD_DIR)/msdospart.o $(BUILD_DIR)/fat32.o
+					 $(BUILD_DIR)/msdospart.o $(BUILD_DIR)/fat32.o $(BUILD_DIR)/fat32_operations.o \
+					 $(BUILD_DIR)/fat32_path_helpers.o $(BUILD_DIR)/fat32_write_helpers.o
 
 	$(LD) $(LDFLAGS) -o $@ $^
 

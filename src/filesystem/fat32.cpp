@@ -46,19 +46,38 @@ uint32_t FAT32::cluster_to_lba(uint32_t cluster) {
 }
 
 bool FAT32::read_sector(uint32_t lba, uint8_t* buffer) {
+    // Validate input
+    if (buffer == nullptr) {
+        return false;
+    }
+    
     // Read a single sector from disk
+    // Note: In a real implementation, we would check the return value of read28
+    // For now, we'll assume it succeeds as in the original code
     disk->read28(lba, buffer, 512);
     return true;
 }
 
 uint32_t FAT32::get_next_cluster(uint32_t cluster) {
+    // Validate cluster number
+    if (cluster < 2) {
+        return 0; // Invalid cluster
+    }
+    
     // Calculate which sector of the FAT contains this cluster's entry
     uint32_t fat_sector = cluster / (512 / sizeof(uint32_t));
     uint32_t fat_offset = cluster % (512 / sizeof(uint32_t));
     
+    // Bounds check
+    if (fat_sector >= fat_size) {
+        return 0; // Invalid sector
+    }
+    
     // Read the FAT sector
     uint8_t fat_buffer[512];
-    read_sector(fat_start + fat_sector, fat_buffer);
+    if (!read_sector(fat_start + fat_sector, fat_buffer)) {
+        return 0; // Error reading sector
+    }
     
     // Extract the next cluster value
     uint32_t* fat_entry = (uint32_t*)fat_buffer;
@@ -73,12 +92,19 @@ uint32_t FAT32::get_next_cluster(uint32_t cluster) {
 }
 
 bool FAT32::read_cluster(uint32_t cluster, uint8_t* buffer) {
+    // Validate input
+    if (buffer == nullptr) {
+        return false;
+    }
+    
     // Convert cluster to LBA
     uint32_t lba = cluster_to_lba(cluster);
     
     // Read all sectors in this cluster
     for (int i = 0; i < bpb.sector_per_cluster; i++) {
-        read_sector(lba + i, buffer + (i * 512));
+        if (!read_sector(lba + i, buffer + (i * 512))) {
+            return false;
+        }
     }
     
     return true;
@@ -169,12 +195,42 @@ bool FAT32::find_file_in_root(const char* name, DirectoryEntryFat32* entry) {
 }
 
 int FAT32::open(const char* path) {
-    // For simplicity, we only support root directory files
-    // and the path should be just the filename
+    // Handle empty path
+    if (path[0] == '\0') {
+        return -1; // Invalid path
+    }
     
+    // Handle root directory path
+    if ((path[0] == '/' && path[1] == '\0') || (path[0] == '/' && path[1] == '\0')) {
+        return -1; // Cannot open directory as a file
+    }
+    
+    // Parse the path to separate parent directory and filename
+    char parent_dir[256];
+    char filename[256];
+    parse_path(path, parent_dir, filename);
+    
+    // Handle case where filename is empty (e.g., "/test/")
+    if (filename[0] == '\0') {
+        return -1; // Cannot open directory as a file
+    }
+    
+    // Find the directory cluster where the file should be located
+    uint32_t dir_cluster = find_directory_cluster(parent_dir);
+    if (dir_cluster == 0) {
+        return -1; // Directory not found
+    }
+    
+    // Find the file in the specified directory
     DirectoryEntryFat32 entry;
-    if (!find_file_in_root(path, &entry)) {
+    uint32_t entry_cluster, entry_offset;
+    if(find_file_in_directory(dir_cluster, filename, &entry, &entry_cluster, &entry_offset)) {
         return -1; // File not found
+    }
+    
+    // Check if the entry is a directory - we can't open directories as files
+    if (entry.attributes & 0x10) {
+        return -1; // This is a directory, not a file
     }
     
     // Find a free file descriptor
