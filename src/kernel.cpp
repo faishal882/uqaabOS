@@ -29,6 +29,11 @@ public:
     foo[0] = c;
     uqaabOS::libc::printf(foo);
   }
+  
+  void on_special_key_down(uint8_t scancode) {
+    // Handle special keys if needed
+    // For now, we're handling arrow keys directly in the driver
+  }
 };
 
 class MouseToConsole : public uqaabOS::driver::MouseEventHandler {
@@ -92,6 +97,7 @@ void taskB() {
 // Kernel entry point
 extern "C" void kernel_main(const void *multiboot_structure,
                             uint32_t /*multiboot_magic*/) {
+  uqaabOS::libc::init_cursor();
   uqaabOS::libc::printf("Hello, World!\n");
 
   // Initialize Global Descriptor Table in kernel

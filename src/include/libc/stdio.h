@@ -13,6 +13,8 @@ namespace uqaabOS
     void print_int(int);
     void print_hex(unsigned long);
     void printf(const char *, ...);
+    void init_cursor();
+    void move_cursor(int dx, int dy);
   } // namespace libc
 
 } // namespace uqaabOS

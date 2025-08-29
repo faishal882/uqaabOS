@@ -5,6 +5,8 @@ namespace libc {
 // VGA text buffer address
 volatile char *video = (volatile char *)0xB8000;
 static int cursor_pos = 0;
+static int cursor_x = 0;
+static int cursor_y = 0;
 const int SCREEN_WIDTH = 80;
 const int SCREEN_HEIGHT = 25;
 const int SCREEN_SIZE = SCREEN_WIDTH * SCREEN_HEIGHT;
@@ -12,6 +14,13 @@ const int SCREEN_SIZE = SCREEN_WIDTH * SCREEN_HEIGHT;
 // Write a byte to a port
 void outb(uint16_t port, uint8_t data) {
     __asm__ volatile ("outb %0, %1" : : "a"(data), "Nd"(port));
+}
+
+// Read a byte from a port
+uint8_t inb(uint16_t port) {
+    uint8_t data;
+    __asm__ volatile ("inb %1, %0" : "=a"(data) : "Nd"(port));
+    return data;
 }
 
 void update_hw_cursor(int x, int y) {
@@ -27,6 +36,50 @@ void update_hw_cursor(int x, int y) {
   outb(0x3D5, cursorLocation & 0xFF);
 }
 
+void set_cursor_shape(uint8_t start, uint8_t end) {
+  // Set the cursor start scanline
+  outb(0x3D4, 0x0A);
+  outb(0x3D5, (inb(0x3D5) & 0xC0) | start);
+  
+  // Set the cursor end scanline
+  outb(0x3D4, 0x0B);
+  outb(0x3D5, (inb(0x3D5) & 0xE0) | end);
+}
+
+void init_cursor() {
+  // Initialize cursor as a vertical line
+  // Try a full-height cursor approach:
+  // Set start to scanline 0 and end to scanline 15 for full height
+  outb(0x3D4, 0x0A);
+  outb(0x3D5, 0x00);  // Start at scanline 0, cursor enabled
+  
+  outb(0x3D4, 0x0B);
+  outb(0x3D5, 0x0F);  // End at scanline 15 (full height)
+}
+
+void move_cursor(int dx, int dy) {
+  cursor_x += dx;
+  cursor_y += dy;
+  
+  // Handle horizontal boundaries
+  if (cursor_x < 0) {
+    cursor_x = 0;
+  } else if (cursor_x >= SCREEN_WIDTH) {
+    cursor_x = SCREEN_WIDTH - 1;
+  }
+  
+  // Handle vertical boundaries
+  if (cursor_y < 0) {
+    cursor_y = 0;
+  } else if (cursor_y >= SCREEN_HEIGHT) {
+    cursor_y = SCREEN_HEIGHT - 1;
+  }
+  
+  // Update the hardware cursor position
+  update_hw_cursor(cursor_x, cursor_y);
+}
+
+// Scrolls the screen content up by one line
 // Scrolls the screen content up by one line
 void scroll_screen() {
     // Copy content of lines 1 to SCREEN_HEIGHT-1 up to lines 0 to SCREEN_HEIGHT-2
@@ -41,36 +94,59 @@ void scroll_screen() {
         video[(last_line_start_index + x) * 2] = ' '; // Clear character
         video[(last_line_start_index + x) * 2 + 1] = 0x07; // Default attribute (white on black)
     }
+    
+    // Adjust cursor position after scrolling
+    if (cursor_y > 0) {
+        cursor_y--;
+    }
 }
 
 void putchar(char c) {
     // Handle newline character
     if (c == '\n') {
-        cursor_pos += SCREEN_WIDTH - (cursor_pos % SCREEN_WIDTH);
+        cursor_x = 0;
+        cursor_y++;
     }
     // Handle backspace character
     else if (c == '\b') {
-        if (cursor_pos > 0) {
-            cursor_pos--; // Move cursor back
-            video[cursor_pos * 2] = ' '; // Clear the character at the cursor position
-            video[cursor_pos * 2 + 1] = 0x07; // Reset to default attribute (white on black)
+        if (cursor_x > 0 || cursor_y > 0) {
+            if (cursor_x > 0) {
+                cursor_x--;
+            } else {
+                cursor_x = SCREEN_WIDTH - 1;
+                cursor_y--;
+            }
+            
+            int pos = cursor_y * SCREEN_WIDTH + cursor_x;
+            video[pos * 2] = ' '; // Clear the character at the cursor position
+            video[pos * 2 + 1] = 0x07; // Reset to default attribute (white on black)
         }
     }
     // Handle regular printable characters
     else if (c >= ' ') {
         // If cursor is already at or beyond the screen limit before printing, scroll first.
-        if (cursor_pos >= SCREEN_SIZE) {
+        if (cursor_y >= SCREEN_HEIGHT) {
             scroll_screen();
-            cursor_pos -= SCREEN_WIDTH;
         }
 
-        video[cursor_pos * 2] = c;
-        video[cursor_pos * 2 + 1] = 0x07; // Default attribute (white on black)
-        cursor_pos++;
+        int pos = cursor_y * SCREEN_WIDTH + cursor_x;
+        video[pos * 2] = c;
+        video[pos * 2 + 1] = 0x07; // Default attribute (white on black)
+        cursor_x++;
+        
+        if (cursor_x >= SCREEN_WIDTH) {
+            cursor_x = 0;
+            cursor_y++;
+        }
+    }
+
+    // Scroll if needed
+    if (cursor_y >= SCREEN_HEIGHT) {
+        scroll_screen();
     }
 
     // Update the hardware cursor position
-    update_hw_cursor(cursor_pos % SCREEN_WIDTH, cursor_pos / SCREEN_WIDTH);
+    update_hw_cursor(cursor_x, cursor_y);
 }
 
 void puts(const char *str) {

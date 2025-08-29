@@ -9,6 +9,7 @@ namespace driver {
 KeyboardEventHandler::KeyboardEventHandler() {}
 void KeyboardEventHandler::on_key_down(char) {}
 void KeyboardEventHandler::on_key_up(char) {}
+void KeyboardEventHandler::on_special_key_down(uint8_t) {}
 /*
   -> 0x21 is the IRQ (Interrupt Request Line) for the keyboard.
   -> data_port to 0x60, I/O port used to communicate with the keyboard for
@@ -59,8 +60,27 @@ KeyboardDriver::~KeyboardDriver() {}
 
 uint32_t KeyboardDriver::handle_interrupt(uint32_t esp) {
   uint8_t key = data_port.read();
-  if (key < 0x80) {
-    switch (key) {
+  
+  // Check if it's a key release (bit 7 set)
+  bool released = key & 0x80;
+  uint8_t scancode = key & 0x7F; // Clear the release bit
+  
+  if (!released) {
+    // Handle special keys (arrow keys, function keys, etc.)
+    switch (scancode) {
+    // Arrow keys (using scancode set 1)
+    case 0x48: // Up arrow
+    case 0x50: // Down arrow
+    case 0x4B: // Left arrow
+    case 0x4D: // Right arrow
+      handler->on_special_key_down(scancode);
+      uqaabOS::libc::move_cursor(
+          (scancode == 0x4D) - (scancode == 0x4B),  // dx: +1 for right, -1 for left
+          (scancode == 0x50) - (scancode == 0x48)   // dy: +1 for down, -1 for up
+      );
+      break;
+      
+    // Regular character keys
     case 0x02:
       handler->on_key_down('1');
       break;
@@ -193,8 +213,8 @@ uint32_t KeyboardDriver::handle_interrupt(uint32_t esp) {
       break;
 
     default: {
-      libc::printf("KEYBOARD 0x");
-      libc::print_hex(key);
+      uqaabOS::libc::printf("KEYBOARD 0x");
+      uqaabOS::libc::print_hex(scancode);
       break;
     }
     }
