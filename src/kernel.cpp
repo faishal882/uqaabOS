@@ -148,7 +148,7 @@ extern "C" void kernel_main(const void *multiboot_structure,
   uqaabOS::libc::printf("Activating drivers...\n");
   driver_manager.activate_all();
   uqaabOS::libc::printf("Activating interrupts...\n");
-  // interrupt_manager.activate();
+  interrupt_manager.activate();
   uqaabOS::libc::printf("Interrupts activated.\n");
 
   uqaabOS::libc::printf("\n ATA primary master: ");

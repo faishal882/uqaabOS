@@ -234,9 +234,12 @@ uint32_t InterruptManager::do_handle_interrupt(uint8_t interrupt_number,
   } else if (interrupt_number != hardware_interrupt_offset) {
     if (interrupt_number <
         sizeof(exception_messages) / sizeof(exception_messages[0])) {
-      libc::printf("EXCEPTION: %s", exception_messages[interrupt_number]);
+      libc::printf("EXCEPTION: ");
+      libc::printf(exception_messages[interrupt_number]);
     } else {
-      libc::printf("UNHANDLED INTERRUPT 0x%02X\n", interrupt_number);
+      libc::printf("UNHANDLED INTERRUPT: ");
+      libc::print_hex(interrupt_number);
+      libc::printf("\n");
     }
   }
 
