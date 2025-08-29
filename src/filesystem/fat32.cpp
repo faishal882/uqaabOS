@@ -517,10 +517,12 @@ void FAT32::list_root() {
         DirectoryEntryFat32* dir_entry = (DirectoryEntryFat32*)buffer;
         int entries_per_cluster = (512 * bpb.sector_per_cluster) / sizeof(DirectoryEntryFat32);
         
+        bool found_end_marker = false;
         for (int i = 0; i < entries_per_cluster; i++) {
-            // Check for end of directory
+            // Check for end of directory - this is critical for stopping at the right place
             if (dir_entry[i].name[0] == 0x00) {
-                break;
+                found_end_marker = true;
+                break; // Stop processing this cluster when we hit the end marker
             }
             
             // Skip deleted entries
@@ -578,12 +580,26 @@ void FAT32::list_root() {
             libc::printf("\n");
         }
         
+        // IMPORTANT: If we found the end marker (0x00), we should not continue to the next cluster
+        // This prevents reading uninitialized data in subsequent clusters
+        if (found_end_marker) {
+            break;
+        }
+        
         // Get next cluster in the chain
         uint32_t next_cluster = get_next_cluster(current_cluster);
         
         // Check for invalid cluster chain
         if (next_cluster == 0xFFFFFFFF) {
             libc::printf("Error: Invalid cluster chain detected in root directory\n");
+            break;
+        }
+        
+        // Safety check - don't process too many clusters to avoid infinite loops
+        if (next_cluster < 2) {
+            libc::printf("Error: Invalid cluster number: ");
+            libc::print_hex(next_cluster);
+            libc::printf("\n");
             break;
         }
         
