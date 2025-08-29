@@ -18,7 +18,7 @@ namespace driver {
  */
 
 // ATA class for interfacing with ATA storage devices.
-class ATA {
+class ATA : public uqaabOS::interrupts::InterruptHandler {
 protected:
   bool master; // Boolean flag indicating if the device is the master drive.
   uint16_t bytes_per_sector; // Number of bytes per sector (default 512).
@@ -38,17 +38,16 @@ protected:
 public:
   // Constructor: Initializes ATA object with master/slave flag and base I/O
   // port.
-  ATA(bool master, uint16_t port_base);
+  ATA(uqaabOS::interrupts::InterruptManager* interrupt_manager, bool master, uint16_t port_base);
 
   ~ATA();
+
+  // Handle interrupt for ATA device
+  virtual uint32_t handle_interrupt(uint32_t esp);
 
   // Sends the IDENTIFY command to the ATA device and prints its information.
   void identify();
 
-  // Reads one sector (default 512 bytes) from the device using 28-bit LBA
-  // addressing.
-  // void read28(uint32_t sector_num, int count = 512);
-  
   // Reads data from one sector of the device using 28-bit LBA addressing.
   void read28(uint32_t sector_num, uint8_t* data, uint32_t count);
 

@@ -152,7 +152,7 @@ extern "C" void kernel_main(const void *multiboot_structure,
   uqaabOS::libc::printf("Interrupts activated.\n");
 
   uqaabOS::libc::printf("\n ATA primary master: ");
-  uqaabOS::driver::ATA ata0m(true, 0x1F0);
+  uqaabOS::driver::ATA ata0m(&interrupt_manager, true, 0x1F0);
   ata0m.identify();
 
   // uqaabOS::libc::printf("\n ATA primary slave: ");
@@ -178,7 +178,7 @@ extern "C" void kernel_main(const void *multiboot_structure,
     if (fat32.initialize()) {
       uqaabOS::libc::printf("FAT32 filesystem initialized successfully\n");
       uqaabOS::libc::printf("Root directory contents:\n");
-      fat32.list_root();
+      // fat32.list_root();
 
       // Test our new functions
       uqaabOS::libc::printf("\n Testing new FAT32 functions: \n");
