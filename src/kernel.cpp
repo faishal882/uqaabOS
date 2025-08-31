@@ -187,23 +187,31 @@ extern "C" void kernel_main(const void *multiboot_structure,
       // fat32.list_root();
 
       // Test our new functions
-      uqaabOS::libc::printf("\n Testing new FAT32 functions: \n");
+      uqaabOS::libc::printf("Testing new FAT32 functions: \n");
 
       // Test ls function
-      uqaabOS::libc::printf("\n Listing directory with ls(): \n");
-      uqaabOS::libc::printf("\n /test: ");
+      uqaabOS::libc::printf("Listing directory with ls(): \n");
+      uqaabOS::libc::printf("/test: ");
       fat32.ls("/test");
       uqaabOS::libc::printf("\n");
       uqaabOS::libc::printf("\n Root: ");
       fat32.ls("/");
       uqaabOS::libc::printf("\n");
 
+      // Test touch function
+      uqaabOS::libc::printf("Creating folder with mkdir(): \n");
+      fat32.touch("/fms/fms.txt");
+      uqaabOS::libc::printf("\n");
+      uqaabOS::libc::printf("/ directory contents after mkdir(): \n");
+      fat32.ls("/fms");
+      uqaabOS::libc::printf("\n");
+
       // Test case-insensitive file opening with different case variations
       // Try to open a file with lowercase name - this should work regardless of
       // actual case on disk
-      const char *filename = "hello.txt"; // Use lowercase as requested
+      const char *filename = "fms.txt"; // Use lowercase as requested
 
-      uqaabOS::libc::printf("\n Trying to open file with name: ");
+      uqaabOS::libc::printf("Trying to open file with name: ");
       uqaabOS::libc::printf(filename);
       uqaabOS::libc::printf("\n");
 

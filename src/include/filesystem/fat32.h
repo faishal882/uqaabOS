@@ -87,6 +87,7 @@ public:
     bool touch(const char* path); // Create a new empty file
     bool rm(const char* path); // Remove a file
     bool rmdir(const char* path); // Remove a directory (recursive)
+    int write(int fd, uint8_t* buf, uint32_t size); // Write data to a file
 };
 
 } // namespace filesystem

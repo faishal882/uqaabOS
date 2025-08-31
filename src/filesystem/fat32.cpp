@@ -612,5 +612,127 @@ void FAT32::list_root() {
     }
 }
 
+// write(): Writes data to a file
+// Returns the number of bytes written, or -1 on error
+int FAT32::write(int fd, uint8_t* buf, uint32_t size) {
+    // Validate inputs
+    if (buf == nullptr) {
+        libc::printf("Error: Null buffer provided to write\n");
+        return -1;
+    }
+    
+    // Validate file descriptor
+    if (fd < 0 || fd >= FAT32_MAX_OPEN_FILES || !file_descriptors[fd].is_open) {
+        libc::printf("Error: Invalid file descriptor\n");
+        return -1;
+    }
+    
+    FileDescriptor* file = &file_descriptors[fd];
+    
+    // Handle zero size write
+    if (size == 0) {
+        return 0;
+    }
+    
+    // Write data
+    uint32_t bytes_written = 0;
+    uint8_t sector_buffer[512];
+    
+    while (bytes_written < size) {
+        // If file has no clusters yet, allocate one
+        if (file->first_cluster == 0) {
+            uint32_t new_cluster;
+            if (!allocate_cluster(&new_cluster)) {
+                libc::printf("Error: Failed to allocate cluster for file\n");
+                return bytes_written > 0 ? bytes_written : -1;
+            }
+            
+            // Initialize the cluster with zeros
+            libc::memset(sector_buffer, 0, sizeof(sector_buffer));
+            for (int i = 0; i < bpb.sector_per_cluster; i++) {
+                write_sector(cluster_to_lba(new_cluster) + i, sector_buffer);
+            }
+            
+            // Set file's first cluster
+            file->first_cluster = new_cluster;
+            file->current_cluster = new_cluster;
+            file->current_sector_in_cluster = 0;
+        }
+        
+        // If we're at the end of the current cluster, allocate a new one
+        if (file->current_sector_in_cluster >= bpb.sector_per_cluster) {
+            uint32_t next_cluster = get_next_cluster(file->current_cluster);
+            
+            // If there's no next cluster, allocate one
+            if (next_cluster == 0 || next_cluster == 0x0FFFFFFF) {
+                uint32_t new_cluster;
+                if (!allocate_cluster(&new_cluster)) {
+                    libc::printf("Error: Failed to allocate cluster for file\n");
+                    return bytes_written > 0 ? bytes_written : -1;
+                }
+                
+                // Link the new cluster to the chain
+                set_next_cluster(file->current_cluster, new_cluster);
+                
+                // Initialize the new cluster with zeros
+                libc::memset(sector_buffer, 0, sizeof(sector_buffer));
+                for (int i = 0; i < bpb.sector_per_cluster; i++) {
+                    write_sector(cluster_to_lba(new_cluster) + i, sector_buffer);
+                }
+                
+                next_cluster = new_cluster;
+            }
+            
+            file->current_cluster = next_cluster;
+            file->current_sector_in_cluster = 0;
+        }
+        
+        // Calculate current LBA
+        uint32_t lba = cluster_to_lba(file->current_cluster) + file->current_sector_in_cluster;
+        
+        // Read the current sector to preserve existing data
+        if (!read_sector(lba, sector_buffer)) {
+            libc::printf("Error: Failed to read sector at LBA ");
+            libc::print_hex(lba);
+            libc::printf("\n");
+            return bytes_written > 0 ? bytes_written : -1;
+        }
+        
+        // Calculate how many bytes we can write to this sector
+        uint32_t sector_offset = file->position % 512;
+        uint32_t bytes_to_sector = 512 - sector_offset;
+        uint32_t bytes_remaining = size - bytes_written;
+        
+        if (bytes_to_sector > bytes_remaining) {
+            bytes_to_sector = bytes_remaining;
+        }
+        
+        // Copy data to sector buffer
+        libc::memcpy(sector_buffer + sector_offset, buf + bytes_written, bytes_to_sector);
+        
+        // Write the sector back
+        if (!write_sector(lba, sector_buffer)) {
+            libc::printf("Error: Failed to write sector at LBA ");
+            libc::print_hex(lba);
+            libc::printf("\n");
+            return bytes_written > 0 ? bytes_written : -1;
+        }
+        
+        // Update position and counters
+        bytes_written += bytes_to_sector;
+        file->position += bytes_to_sector;
+        
+        // Update file size if necessary
+        if (file->position > file->size) {
+            file->size = file->position;
+        }
+        
+        // Update sector tracking
+        file->current_sector_in_cluster = (file->position / 512) % bpb.sector_per_cluster;
+    }
+    
+    return bytes_written;
+}
+
 } // namespace filesystem
 } // namespace uqaabOS
