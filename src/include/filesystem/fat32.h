@@ -44,6 +44,21 @@ private:
     bool find_file_in_root(const char* name, DirectoryEntryFat32* entry);
     uint32_t cluster_to_lba(uint32_t cluster);
     bool read_sector(uint32_t lba, uint8_t* buffer);
+    bool strcasecmp(const char* str1, const char* str2); // Case-insensitive string comparison
+    
+    // New helper methods for write operations
+    bool write_sector(uint32_t lba, uint8_t* buffer);
+    bool write_cluster(uint32_t cluster, uint8_t* buffer);
+    bool set_next_cluster(uint32_t cluster, uint32_t next_cluster);
+    uint32_t find_free_cluster();
+    bool allocate_cluster(uint32_t* cluster);
+    bool free_cluster_chain(uint32_t start_cluster);
+    
+    // Helper for path traversal
+    bool find_file_in_directory(uint32_t dir_cluster, const char* name, DirectoryEntryFat32* entry, uint32_t* entry_cluster, uint32_t* entry_offset);
+    bool parse_path(const char* path, char* parent_dir, char* filename);
+    uint32_t find_directory_cluster(const char* path);
+    void list_directory(uint32_t dir_cluster);
     
 public:
     // Constructor
@@ -63,6 +78,16 @@ public:
     
     // List files in the root directory
     void list_root();
+    
+    // Extended read-only functions
+    void ls(const char* path); // List files in a directory
+    
+    // Write functions
+    bool mkdir(const char* path); // Create a new directory
+    bool touch(const char* path); // Create a new empty file
+    bool rm(const char* path); // Remove a file
+    bool rmdir(const char* path); // Remove a directory (recursive)
+    int write(int fd, uint8_t* buf, uint32_t size); // Write data to a file
 };
 
 } // namespace filesystem

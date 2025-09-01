@@ -18,6 +18,7 @@ public:
   KeyboardEventHandler();
   virtual void on_key_down(char);
   virtual void on_key_up(char);
+  virtual void on_special_key_down(uint8_t scancode);
 };
 
 class KeyboardDriver : public interrupts::InterruptHandler, public Driver {

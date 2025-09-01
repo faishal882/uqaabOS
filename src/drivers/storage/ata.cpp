@@ -6,8 +6,9 @@ namespace driver {
 
 // ATA class constructor: Initializes the I/O ports based on the base port and
 // whether the device is master.
-ATA::ATA(bool master, uint16_t port_base)
-    : data_port(port_base),        // Initialize data port at base address.
+ATA::ATA(uqaabOS::interrupts::InterruptManager* interrupt_manager, bool master, uint16_t port_base)
+    : InterruptHandler(interrupt_manager, 0x20 + 14), // IRQ 14 for primary ATA
+      data_port(port_base),        // Initialize data port at base address.
       error_port(port_base + 0x1), // Initialize error port at base + 1.
       sector_count_port(port_base +
                         0x2), // Initialize sector count port at base + 2.
@@ -25,6 +26,18 @@ ATA::ATA(bool master, uint16_t port_base)
 
 // Destructor for ATA class (currently no dynamic resources to free).
 ATA::~ATA() {}
+
+// Handle interrupt for ATA device
+uint32_t ATA::handle_interrupt(uint32_t esp) {
+  // Read the status to acknowledge the interrupt
+  uint8_t status = command_port.read();
+  
+  // For now, just print that we received an interrupt
+  // In a full implementation, you might want to signal a waiting thread or update flags
+  libc::printf("ATA Interrupt Received - Status: %x\n", status);
+  
+  return esp;
+}
 
 // identify(): Sends the IDENTIFY command to the device and prints its returned
 // identification data.
@@ -117,30 +130,21 @@ void ATA::read28(uint32_t sector_num, uint8_t *data, uint32_t count) {
   lba_mid_port.write((sector_num & 0x0000FF00) >> 8);
   lba_high_port.write((sector_num & 0x00FF0000) >> 16);
 
-  // Add retry logic to handle transient errors:
-  int retries = 3;
-  while (retries > 0) {
-    command_port.write(0x20); // Send the READ command
-    uint8_t status = command_port.read();
-    retries--;
-
-    if (!(status & 0x01)) { // No error
-        break;
-    }
-
-    libc::printf("WARNING: Retrying read operation. Retries left: %d\n", retries);
-  }
-
-  if (status & 0x01) { // If still an error after retries
-    uint8_t error_code = error_port.read();
-    libc::printf("ERROR: Read failed. Error code: 0x%x\n", error_code);
-    return;
-  }
-
-  // Wait for the device to complete the operation.
+  // Send the READ command
+  command_port.write(0x20);
+  
+  // Wait for the device to complete the operation or for an interrupt.
+  // We'll poll for now but the interrupt handler will also be called.
   status = command_port.read();
-  while ((status & 0x80) && !(status & 0x01)) {
+  int timeout = 1000000; // Timeout counter to prevent infinite loop
+  while ((status & 0x80) && !(status & 0x01) && timeout > 0) {
       status = command_port.read();
+      timeout--;
+  }
+
+  if (timeout <= 0) {
+      libc::printf("ERROR: Read operation timed out.\n");
+      return;
   }
 
   if (status & 0x01) { // If an error occurred...
@@ -173,6 +177,12 @@ void ATA::write28(uint32_t sector_num, uint8_t *data, uint32_t count) {
       512) // Ensure that no more than one sector (512 bytes) is written.
     return;
 
+  // Wait for the device to be ready.
+  uint8_t status = command_port.read();
+  while (status & 0x80) { // Wait while the device is busy.
+      status = command_port.read();
+  }
+
   // Set the device register with the upper LBA bits and select master/slave.
   device_port.write((master ? 0xE0 : 0xF0) | ((sector_num & 0x0F000000) >> 24));
   error_port.write(0);                         // Clear the error register.
@@ -202,6 +212,26 @@ void ATA::write28(uint32_t sector_num, uint8_t *data, uint32_t count) {
   // Write zero padding if less than 512 bytes of data were provided.
   for (int i = count + (count % 2); i < 512; i += 2)
     data_port.write(0x0000); // Write zero to complete the sector.
+    
+  // Wait for the device to complete the operation or for an interrupt.
+  // We'll poll for now but the interrupt handler will also be called.
+  status = command_port.read();
+  int timeout = 1000000; // Timeout counter to prevent infinite loop
+  while ((status & 0x80) && !(status & 0x01) && timeout > 0) {
+      status = command_port.read();
+      timeout--;
+  }
+
+  if (timeout <= 0) {
+      libc::printf("ERROR: Write operation timed out.\n");
+      return;
+  }
+
+  if (status & 0x01) { // If an error occurred...
+      uint8_t error_code = error_port.read();
+      libc::printf("ERROR: Write failed. Error code: 0x%x\n", error_code);
+      return;
+  }
 }
 
 // flush(): Flushes the ATA device's write cache.
