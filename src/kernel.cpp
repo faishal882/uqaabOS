@@ -12,6 +12,8 @@
 #include "include/libc/stdio.h"
 #include "include/memorymanagement/memorymanagement.h"
 #include "include/multitasking/multitasking.h"
+#include "include/terminal/terminal.h"
+#include "include/terminal/terminal_keyboard.h"
 #include <cstdint>
 
 // Compiler checks
@@ -21,20 +23,7 @@
 #error "This code must be compiled with an x86-elf compiler"
 #endif
 
-class PrintfKeyboardEventHandler
-    : public uqaabOS::driver::KeyboardEventHandler {
-public:
-  void on_key_down(char c) {
-    char foo[] = " ";
-    foo[0] = c;
-    uqaabOS::libc::printf(foo);
-  }
-  
-  void on_special_key_down(uint8_t scancode) {
-    // Handle special keys if needed
-    // For now, we're handling arrow keys directly in the driver
-  }
-};
+using namespace uqaabOS::terminal;
 
 class MouseToConsole : public uqaabOS::driver::MouseEventHandler {
   int8_t x, y;
@@ -141,9 +130,9 @@ extern "C" void kernel_main(const void *multiboot_structure,
   uqaabOS::driver::MouseDriver mouse(&interrupt_manager, &mouse_event_driver);
   driver_manager.add_driver(&mouse);
 
-  PrintfKeyboardEventHandler keyboard_event_driver;
+  uqaabOS::terminal::TerminalKeyboardEventHandler keyboard_event_handler(nullptr);
   uqaabOS::driver::KeyboardDriver keyboard(&interrupt_manager,
-                                           &keyboard_event_driver);
+                                           &keyboard_event_handler);
   driver_manager.add_driver(&keyboard);
 
   uqaabOS::driver::PCIController pci_controller;
@@ -183,63 +172,18 @@ extern "C" void kernel_main(const void *multiboot_structure,
     uqaabOS::filesystem::FAT32 fat32(&ata0m, fat32_lba);
     if (fat32.initialize()) {
       uqaabOS::libc::printf("FAT32 filesystem initialized successfully\n");
-      uqaabOS::libc::printf("Root directory contents:\n");
-      // fat32.list_root();
-
-      // Test our new functions
-      uqaabOS::libc::printf("Testing new FAT32 functions: \n");
-
-      // Test ls function
-      uqaabOS::libc::printf("Listing directory with ls(): \n");
-      uqaabOS::libc::printf("/test: ");
-      fat32.ls("/test");
-      uqaabOS::libc::printf("\n");
-      uqaabOS::libc::printf("\n Root: ");
-      fat32.ls("/");
-      uqaabOS::libc::printf("\n");
-
-      // Test touch function
-      uqaabOS::libc::printf("Creating folder with mkdir(): \n");
-      fat32.touch("/fms/fms.txt");
-      uqaabOS::libc::printf("\n");
-      uqaabOS::libc::printf("/ directory contents after mkdir(): \n");
-      fat32.ls("/fms");
-      uqaabOS::libc::printf("\n");
-
-      // Test case-insensitive file opening with different case variations
-      // Try to open a file with lowercase name - this should work regardless of
-      // actual case on disk
-      const char *filename = "fms.txt"; // Use lowercase as requested
-
-      uqaabOS::libc::printf("Trying to open file with name: ");
-      uqaabOS::libc::printf(filename);
-      uqaabOS::libc::printf("\n");
-
-      int fd = fat32.open(filename);
-      if (fd >= 0) {
-        uqaabOS::libc::printf("Successfully opened file: ");
-        uqaabOS::libc::printf(filename);
-        uqaabOS::libc::printf("\n");
-
-        // Read some content from the file
-        uint8_t buffer[512];
-        int bytes = fat32.read(fd, buffer, 512);
-        if (bytes > 0) {
-          // Ensure null termination for printing
-          if (bytes < 512)
-            buffer[bytes] = '\0';
-          else
-            buffer[511] = '\0';
-
-          uqaabOS::libc::printf("Read %d bytes from file: \n", bytes);
-          uqaabOS::libc::printf((char *)buffer);
-          uqaabOS::libc::printf("\n");
-        }
-        fat32.close(fd);
-      } else {
-        uqaabOS::libc::printf("Failed to open file: ");
-        uqaabOS::libc::printf(filename);
-        uqaabOS::libc::printf("\n");
+      
+      // Initialize terminal with FAT32 instance
+      // We'll create the terminal on the stack and run it in a loop
+      uqaabOS::terminal::Terminal terminal(&fat32);
+      keyboard_event_handler.set_terminal(&terminal);
+      terminal.initialize();
+      
+      // Keep the terminal alive by entering a loop
+      // In a real implementation, you might want to structure this differently
+      while (1) {
+        // The terminal will handle input through the keyboard interrupt handler
+        asm volatile("hlt"); // Halt CPU until next interrupt
       }
     } else {
       uqaabOS::libc::printf("Failed to initialize FAT32 filesystem\n");

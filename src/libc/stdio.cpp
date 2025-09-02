@@ -258,5 +258,20 @@ void printf(const char *format, ...) {
   va_end(args);
 }
 
+void clear_screen() {
+  // Clear the entire screen by filling it with spaces
+  for (int i = 0; i < SCREEN_HEIGHT * SCREEN_WIDTH; i++) {
+    video[i * 2] = ' ';      // Character is a space
+    video[i * 2 + 1] = 0x07; // Attribute is white on black
+  }
+  
+  // Reset cursor position
+  cursor_x = 0;
+  cursor_y = 0;
+  
+  // Update hardware cursor
+  update_hw_cursor(cursor_x, cursor_y);
+}
+
 } // namespace libc
 } // namespace uqaabOS

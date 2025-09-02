@@ -102,6 +102,14 @@ $(BUILD_DIR)/fat32_path_helpers.o: $(SRC_DIR)/filesystem/fat32_path_helpers.cpp
 $(BUILD_DIR)/fat32_write_helpers.o: $(SRC_DIR)/filesystem/fat32_write_helpers.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
+# Compile terminal.cpp to object file
+$(BUILD_DIR)/terminal.o: $(SRC_DIR)/terminal/terminal.cpp
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Compile terminal_keyboard.cpp to object file
+$(BUILD_DIR)/terminal_keyboard.o: $(SRC_DIR)/terminal/terminal_keyboard.cpp
+	$(CC) $(CFLAGS) -c $< -o $@
+
 # Link kernel binary
 $(BUILD_DIR)/kernel.bin: $(BUILD_DIR)/kernel.o $(BUILD_DIR)/multiboot.o \
                      $(BUILD_DIR)/gdt.o $(BUILD_DIR)/stdio.o $(BUILD_DIR)/string.o \
@@ -110,7 +118,8 @@ $(BUILD_DIR)/kernel.bin: $(BUILD_DIR)/kernel.o $(BUILD_DIR)/multiboot.o \
 					 $(BUILD_DIR)/driver.o $(BUILD_DIR)/pci.o $(BUILD_DIR)/vga.o \
 					 $(BUILD_DIR)/keyboard.o $(BUILD_DIR)/mouse.o $(BUILD_DIR)/ata.o \
 					 $(BUILD_DIR)/msdospart.o $(BUILD_DIR)/fat32.o $(BUILD_DIR)/fat32_operations.o \
-					 $(BUILD_DIR)/fat32_path_helpers.o $(BUILD_DIR)/fat32_write_helpers.o
+					 $(BUILD_DIR)/fat32_path_helpers.o $(BUILD_DIR)/fat32_write_helpers.o \
+					 $(BUILD_DIR)/terminal.o $(BUILD_DIR)/terminal_keyboard.o
 
 	$(LD) $(LDFLAGS) -o $@ $^
 
