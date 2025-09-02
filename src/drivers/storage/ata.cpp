@@ -34,7 +34,7 @@ uint32_t ATA::handle_interrupt(uint32_t esp) {
   
   // For now, just print that we received an interrupt
   // In a full implementation, you might want to signal a waiting thread or update flags
-  libc::printf("ATA Interrupt Received - Status: %x\n", status);
+  // libc::printf("ATA Interrupt Received - Status: %x\n", status);
   
   return esp;
 }
