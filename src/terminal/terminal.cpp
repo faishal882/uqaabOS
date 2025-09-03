@@ -193,7 +193,7 @@ void Terminal::handle_cat(int argc, char* argv[]) {
     
     uint8_t buffer[512];
     int bytes_read;
-    while ((bytes_read = fat32->read(fd, buffer, 511)) > 0) {
+    while ((bytes_read = fat32->read(fd, buffer, 512)) > 0) {
         // Print each character individually to avoid buffer overflow issues
         for (int i = 0; i < bytes_read; i++) {
             libc::putchar((char)buffer[i]);
