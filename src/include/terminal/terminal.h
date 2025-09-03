@@ -24,6 +24,7 @@ private:
     void handle_rm(int argc, char* argv[]);
     void handle_rmdir(int argc, char* argv[]);
     void handle_cat(int argc, char* argv[]);
+    void handle_write(int argc, char* argv[]);
     void handle_echo(int argc, char* argv[]);
     void handle_help();
     void handle_clear();

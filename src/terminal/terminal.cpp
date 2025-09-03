@@ -102,6 +102,8 @@ void Terminal::execute_command(char* command) {
         handle_rmdir(argc, argv);
     } else if (libc::strcmp(argv[0], "cat") == 0) {
         handle_cat(argc, argv);
+    } else if (libc::strcmp(argv[0], "write") == 0) {
+        handle_write(argc, argv);
     } else if (libc::strcmp(argv[0], "echo") == 0) {
         handle_echo(argc, argv);
     } else if (libc::strcmp(argv[0], "help") == 0) {
@@ -219,6 +221,7 @@ void Terminal::handle_help() {
     libc::printf("  rm <path>          - Remove file\n");
     libc::printf("  rmdir <path>       - Remove directory\n");
     libc::printf("  cat <path>         - Display file contents\n");
+    libc::printf("  write <file> <text> - Write text to file\n");
     libc::printf("  echo <text>        - Display text\n");
     libc::printf("  clear              - Clear screen\n");
     libc::printf("  help               - Show this help\n");
@@ -227,6 +230,84 @@ void Terminal::handle_help() {
 void Terminal::handle_clear() {
     // Clear the screen using our new clear_screen function
     libc::clear_screen();
+}
+
+void Terminal::handle_write(int argc, char* argv[]) {
+    if (argc < 3) {
+        libc::printf("Usage: write <file_path> <contents>\n");
+        return;
+    }
+    
+    // Ensure path starts with '/' if it's a relative path to root
+    char full_path[256];
+    if (argv[1][0] != '/' && argv[1][0] != '.') {
+        // It's a relative path, prepend '/'
+        full_path[0] = '/';
+        libc::strncpy(full_path + 1, argv[1], 254);
+        full_path[255] = '\0';
+    } else {
+        // It's already an absolute path or relative path starting with '.'
+        libc::strncpy(full_path, argv[1], 255);
+        full_path[255] = '\0';
+    }
+    
+    // Combine all arguments after the filename into one string
+    char content[512];
+    content[0] = '\0';
+    int content_len = 0;
+    
+    for (int i = 2; i < argc; i++) {
+        int arg_len = libc::strlen(argv[i]);
+        if (content_len + arg_len < 511) {
+            libc::strncpy(content + content_len, argv[i], arg_len);
+            content_len += arg_len;
+            
+            // Add space between arguments
+            if (i < argc - 1 && content_len < 510) {
+                content[content_len] = ' ';
+                content_len++;
+            }
+        }
+        content[content_len] = '\0';
+    }
+    
+    // Try to open the file
+    int fd = fat32->open(full_path);
+    
+    // If file doesn't exist, create it
+    if (fd < 0) {
+        // // Create the file using touch
+        fat32->touch(full_path);
+        // Try to open it again
+        fd = fat32->open(full_path);
+        
+        if (fd < 0) {
+            libc::printf("Error: Could not create or open file '");
+            libc::printf(full_path);
+            libc::printf("'\n");
+            return;
+        }
+    }
+    
+    // Write the content to the file
+    int bytes_written = fat32->write(fd, (uint8_t*)content, libc::strlen(content));
+    
+    if (bytes_written < 0) {
+        libc::printf("Error: Failed to write to file '");
+        libc::printf(full_path);
+        libc::printf("'\n");
+        fat32->close(fd);
+        return;
+    }
+    
+    // Close the file
+    fat32->close(fd);
+    
+    libc::printf("Successfully wrote ");
+    libc::print_int(bytes_written);
+    libc::printf(" bytes to '");
+    libc::printf(full_path);
+    libc::printf("'\n");
 }
 
 void Terminal::run() {
