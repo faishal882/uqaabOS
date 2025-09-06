@@ -73,8 +73,8 @@ bool FAT32::mkdir(const char *path) {
   }
 
   // Create the directory entries for "." and ".."
-  uint8_t dir_buffer[512 * 32]; // Buffer for the new directory cluster
-  libc::memset(dir_buffer, 0, sizeof(dir_buffer));
+  uint8_t* dir_buffer = new uint8_t[512 * 32]; // Buffer for the new directory cluster
+  libc::memset(dir_buffer, 0, 512 * 32);
 
   DirectoryEntryFat32 *dir_entries = (DirectoryEntryFat32 *)dir_buffer;
 
@@ -103,9 +103,10 @@ bool FAT32::mkdir(const char *path) {
 
   // Write the new directory cluster
   write_cluster(new_cluster, dir_buffer);
+  delete[] dir_buffer;
 
   // Find a free entry in the parent directory
-  uint8_t parent_buffer[512 * 32];
+  uint8_t* parent_buffer = new uint8_t[512 * 32];
   uint32_t current_cluster = parent_cluster;
   bool entry_found = false;
   uint32_t free_entry_cluster = 0;
@@ -137,14 +138,16 @@ bool FAT32::mkdir(const char *path) {
         if (!allocate_cluster(&next_cluster)) {
           libc::printf("Failed to allocate cluster for parent directory  \n");
           free_cluster_chain(new_cluster); // Clean up
+          delete[] parent_buffer;
           return false;
         }
         // Link the new cluster to the chain
         set_next_cluster(current_cluster, next_cluster);
         // Initialize new cluster with zeros
-        uint8_t zero_buffer[512 * 32];
-        libc::memset(zero_buffer, 0, sizeof(zero_buffer));
+        uint8_t* zero_buffer = new uint8_t[512 * 32];
+        libc::memset(zero_buffer, 0, 512 * 32);
         write_cluster(next_cluster, zero_buffer);
+        delete[] zero_buffer;
         // Set the new cluster as the current cluster
         current_cluster = next_cluster;
         // Retry with the new cluster
@@ -161,6 +164,7 @@ bool FAT32::mkdir(const char *path) {
   if (!entry_found) {
     libc::printf("Failed to find free entry in parent directory  \n");
     free_cluster_chain(new_cluster); // Clean up
+    delete[] parent_buffer;
     return false;
   }
 
@@ -213,6 +217,8 @@ bool FAT32::mkdir(const char *path) {
   write_sector(cluster_to_lba(free_entry_cluster) + (free_entry_offset / 512),
                parent_buffer);
 
+  delete[] parent_buffer;
+
   libc::printf("Directory created: ");
   libc::printf(path);
   libc::printf("  \n");
@@ -226,6 +232,10 @@ bool FAT32::touch(const char *path) {
   parse_path(path, parent_path, filename);
 
   // Find the parent directory cluster
+  if (parent_path[0] == '\0') {
+      parent_path[0] = '/';
+      parent_path[1] = '\0';
+  }
   uint32_t parent_cluster = find_directory_cluster(parent_path);
   if (parent_cluster == 0) {
     libc::printf("Parent directory not found: ");
@@ -233,6 +243,7 @@ bool FAT32::touch(const char *path) {
     libc::printf("  \n");
     return false;
   }
+
 
   // Check if file already exists
   DirectoryEntryFat32 existing_entry;
@@ -246,7 +257,7 @@ bool FAT32::touch(const char *path) {
   }
 
   // Find a free entry in the parent directory
-  uint8_t parent_buffer[512 * 32];
+  uint8_t* parent_buffer = new uint8_t[512];
   uint32_t current_cluster = parent_cluster;
   bool entry_found = false;
   uint32_t free_entry_cluster = 0;
@@ -277,14 +288,16 @@ bool FAT32::touch(const char *path) {
         // Need to allocate a new cluster for the parent directory
         if (!allocate_cluster(&next_cluster)) {
           libc::printf("Failed to allocate cluster for parent directory  \n");
+          delete[] parent_buffer;
           return false;
         }
         // Link the new cluster to the chain
         set_next_cluster(current_cluster, next_cluster);
         // Initialize new cluster with zeros
-        uint8_t zero_buffer[512 * 32];
-        libc::memset(zero_buffer, 0, sizeof(zero_buffer));
+        uint8_t* zero_buffer = new uint8_t[512 * 32];
+        libc::memset(zero_buffer, 0, 512 * 32);
         write_cluster(next_cluster, zero_buffer);
+        delete[] zero_buffer;
         // Set the new cluster as the current cluster
         current_cluster = next_cluster;
         // Retry with the new cluster
@@ -300,6 +313,7 @@ bool FAT32::touch(const char *path) {
 
   if (!entry_found) {
     libc::printf("Failed to find free entry in parent directory  \n");
+    delete[] parent_buffer;
     return false;
   }
 
@@ -352,11 +366,14 @@ bool FAT32::touch(const char *path) {
   write_sector(cluster_to_lba(free_entry_cluster) + (free_entry_offset / 512),
                parent_buffer);
 
+  delete[] parent_buffer;
+
   libc::printf("File created: ");
   libc::printf(path);
   libc::printf("  \n");
   return true;
 }
+
 
 bool FAT32::rm(const char *path) {
   // Parse the path to separate parent directory and filename
@@ -458,7 +475,7 @@ bool FAT32::rmdir(const char *path) {
 
   // Check if directory is empty (only "." and ".." entries)
   bool is_empty = true;
-  uint8_t dir_buffer[512 * 32];
+  uint8_t* dir_buffer = new uint8_t[512 * 32];
   uint32_t current_cluster = first_cluster;
 
   while (current_cluster != 0 && is_empty) {
@@ -593,6 +610,8 @@ bool FAT32::rmdir(const char *path) {
 
   // Write the sector back
   write_sector(sector_lba, sector_buffer);
+
+  delete[] dir_buffer;
 
   libc::printf("Directory deleted: ");
   libc::printf(path);

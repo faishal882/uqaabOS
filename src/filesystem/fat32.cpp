@@ -241,7 +241,7 @@ bool FAT32::find_file_in_root(const char* name, DirectoryEntryFat32* entry) {
     }
     
     // Buffer to hold directory cluster data
-    uint8_t buffer[512 * 32]; // Assuming max 32 sectors per cluster
+    uint8_t* buffer = new uint8_t[512 * 32]; // Assuming max 32 sectors per cluster
     
     // Start with the root cluster
     uint32_t current_cluster = root_cluster;
@@ -298,6 +298,7 @@ bool FAT32::find_file_in_root(const char* name, DirectoryEntryFat32* entry) {
             // Compare with requested name (case insensitive comparison)
             if (strcasecmp(entry_name, name) == 0) {
                 *entry = dir_entry[i];
+                delete[] buffer;
                 return true;
             }
         }
@@ -308,12 +309,14 @@ bool FAT32::find_file_in_root(const char* name, DirectoryEntryFat32* entry) {
         // Check for invalid cluster chain
         if (next_cluster == 0xFFFFFFFF) {
             libc::printf("Error: Invalid cluster chain in root directory\n");
+            delete[] buffer;
             return false;
         }
         
         current_cluster = next_cluster;
     }
     
+    delete[] buffer;
     return false;
 }
 
@@ -511,7 +514,7 @@ void FAT32::close(int fd) {
 
 void FAT32::list_root() {
     // Buffer to hold directory cluster data
-    uint8_t buffer[512 * 32]; // Assuming max 32 sectors per cluster
+    uint8_t* buffer = new uint8_t[512 * 32]; // Assuming max 32 sectors per cluster
     
     // Start with the root cluster
     uint32_t current_cluster = root_cluster;
@@ -522,6 +525,7 @@ void FAT32::list_root() {
         // Read the current cluster
         if (!read_cluster(current_cluster, buffer)) {
             libc::printf("Error: Failed to read root directory cluster\n");
+            delete[] buffer;
             return;
         }
         
@@ -622,6 +626,7 @@ void FAT32::list_root() {
     if (directory_empty) {
         libc::printf("Root directory is empty\n");
     }
+    delete[] buffer;
 }
 
 // write(): Writes data to a file

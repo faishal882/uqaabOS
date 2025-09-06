@@ -140,6 +140,11 @@ void Terminal::handle_touch(int argc, char* argv[]) {
         libc::printf("Usage: touch <file_path>\n");
         return;
     }
+    libc::printf("touch: path is '");
+    libc::printf(argv[0]);
+    libc::printf(" ");
+    libc::printf(argv[1]);
+    libc::printf("'\n");
     fat32->touch(argv[1]);
 }
 

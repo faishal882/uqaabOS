@@ -119,7 +119,7 @@ uint32_t FAT32::find_directory_cluster(const char *path) {
       DirectoryEntryFat32 entry;
       uint32_t entry_cluster, entry_offset;
 
-      if (!find_file_in_directory(current_cluster, component, &entry,
+      if (!find_file_in_directory(current_cluster, component, &entry, 
                                   &entry_cluster, &entry_offset)) {
         return 0; // Directory not found
       }
@@ -152,9 +152,9 @@ uint32_t FAT32::find_directory_cluster(const char *path) {
   return current_cluster;
 }
 
-bool FAT32::find_file_in_directory(uint32_t dir_cluster, const char *name,
-                                   DirectoryEntryFat32 *entry,
-                                   uint32_t *entry_cluster,
+bool FAT32::find_file_in_directory(uint32_t dir_cluster, const char *name, 
+                                   DirectoryEntryFat32 *entry, 
+                                   uint32_t *entry_cluster, 
                                    uint32_t *entry_offset) {
   // Validate inputs
   if (name == nullptr || entry == nullptr || entry_cluster == nullptr ||
@@ -259,7 +259,8 @@ void FAT32::list_directory(uint32_t dir_cluster) {
   }
 
   // Buffer to hold directory cluster data
-  uint8_t buffer[512 * 32]; // Assuming max 32 sectors per cluster
+  uint8_t* buffer = new uint8_t[512 * 32]; // Assuming max 32 sectors per cluster
+
 
   // Start with the given cluster
   uint32_t current_cluster = dir_cluster;
@@ -370,6 +371,7 @@ void FAT32::list_directory(uint32_t dir_cluster) {
   if (directory_empty) {
     libc::printf("Directory is empty \n");
   }
+  delete[] buffer;
 }
 
 } // namespace filesystem
