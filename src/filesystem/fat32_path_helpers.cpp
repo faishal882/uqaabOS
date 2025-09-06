@@ -157,85 +157,98 @@ bool FAT32::find_file_in_directory(uint32_t dir_cluster, const char *name,
                                    uint32_t *entry_cluster,
                                    uint32_t *entry_offset) {
   // Validate inputs
-  if (name == nullptr || entry == nullptr || entry_cluster == nullptr || entry_offset == nullptr) {
+  if (name == nullptr || entry == nullptr || entry_cluster == nullptr ||
+      entry_offset == nullptr) {
     return false;
   }
-
-  // Buffer to hold directory cluster data
-  uint8_t buffer[512 * 32]; // Assuming max 32 sectors per cluster
 
   // Start with the given cluster
   uint32_t current_cluster = dir_cluster;
 
+  // Define constants for FAT32 entry status
+  const uint8_t END_OF_DIRECTORY = 0x00;
+  const uint8_t DELETED_ENTRY = 0xE5;
+  const uint8_t LFN_ATTRIBUTE = 0x0F;
+
+  // Buffer to hold one sector of data
+  uint8_t sector_buffer[512];
+
   // Process clusters in the directory chain
-  while (current_cluster != 0) {
-    // Read the current cluster
-    if (!read_cluster(current_cluster, buffer)) {
-      return false; // Error reading cluster
-    }
-
-    // Process directory entries in this cluster
-    DirectoryEntryFat32 *dir_entry = (DirectoryEntryFat32 *)buffer;
-    int entries_per_cluster = (512 * bpb.sector_per_cluster) / sizeof(DirectoryEntryFat32);
-    
-    for (int i = 0; i < entries_per_cluster; i++) {
-      // Check for end of directory
-      if (dir_entry[i].name[0] == 0x00) {
-        break;
+  while (current_cluster != 0 && current_cluster < 0x0FFFFFF0) {
+    // Iterate over sectors in the cluster
+    for (int sector = 0; sector < bpb.sector_per_cluster; ++sector) {
+      // Read a single sector
+      uint32_t lba = cluster_to_lba(current_cluster) + sector;
+      if (!read_sector(lba, sector_buffer)) {
+        // Optional: Add error logging here
+        return false; // Error reading sector
       }
 
-      // Skip deleted entries
-      if (dir_entry[i].name[0] == 0xE5) {
-        continue;
-      }
+      // Process directory entries in this sector
+      DirectoryEntryFat32 *dir_entry = (DirectoryEntryFat32 *)sector_buffer;
+      int entries_per_sector = 512 / sizeof(DirectoryEntryFat32);
 
-      // Skip long filename entries
-      if ((dir_entry[i].attributes & 0x0F) == 0x0F) {
-        continue;
-      }
+      for (int i = 0; i < entries_per_sector; ++i) {
+        // Check for end of directory
+        if (dir_entry[i].name[0] == END_OF_DIRECTORY) {
+          return false; // End of directory, file not found
+        }
 
-      // Format the entry name
-      char entry_name[13]; // 8.3 name + null terminator
-      int name_len = 0;
+        // Skip deleted entries
+        if (dir_entry[i].name[0] == DELETED_ENTRY) {
+          continue;
+        }
 
-      // Copy name part (8 characters)
-      for (int j = 0; j < 8 && dir_entry[i].name[j] != ' ' && dir_entry[i].name[j] != '\0'; j++) {
-        entry_name[name_len++] = dir_entry[i].name[j];
-      }
+        // Skip long filename entries
+        if ((dir_entry[i].attributes & LFN_ATTRIBUTE) == LFN_ATTRIBUTE) {
+          continue;
+        }
 
-      // Add dot if there's an extension
-      if (dir_entry[i].ext[0] != ' ' && dir_entry[i].ext[0] != '\0') {
-        entry_name[name_len++] = '.';
+        // Format the entry name to 8.3 format
+        char entry_name[13]; // 8.3 name + null terminator
+        int name_len = 0;
 
-        // Copy extension part (3 characters)
-        for (int j = 0; j < 3 && dir_entry[i].ext[j] != ' ' && dir_entry[i].ext[j] != '\0'; j++) {
-          entry_name[name_len++] = dir_entry[i].ext[j];
+        // Copy name part (8 characters)
+        for (int j = 0; j < 8 && dir_entry[i].name[j] != ' '; ++j) {
+          entry_name[name_len++] = dir_entry[i].name[j];
+        }
+
+        // Add dot if there's an extension
+        if (!(dir_entry[i].attributes & 0x10)) { // Not a directory
+            bool has_extension = false;
+            for (int j = 0; j < 3; ++j) {
+              if (dir_entry[i].ext[j] != ' ') {
+                has_extension = true;
+                break;
+              }
+            }
+
+            if (has_extension) {
+              entry_name[name_len++] = '.';
+              // Copy extension part (3 characters)
+              for (int j = 0; j < 3 && dir_entry[i].ext[j] != ' '; ++j) {
+                entry_name[name_len++] = dir_entry[i].ext[j];
+              }
+            }
+        }
+
+        entry_name[name_len] = '\0';
+
+        // Case-insensitive comparison
+        if (strcasecmp(entry_name, name) == 0) {
+          *entry = dir_entry[i];
+          *entry_cluster = current_cluster;
+          *entry_offset = (sector * entries_per_sector + i) * sizeof(DirectoryEntryFat32);
+          return true;
         }
       }
-
-      entry_name[name_len] = '\0';
-
-      // Compare with requested name (case insensitive comparison)
-      if (strcasecmp(entry_name, name)) {
-        *entry = dir_entry[i];
-        *entry_cluster = current_cluster;
-        *entry_offset = i * sizeof(DirectoryEntryFat32);
-        return true;
-      }
     }
 
-    // Get next cluster in the chain
-    uint32_t next_cluster = get_next_cluster(current_cluster);
-    
-    // Check for invalid cluster chain
-    if (next_cluster == 0xFFFFFFFF) {
-      return false; // Invalid cluster chain
-    }
-    
-    current_cluster = next_cluster;
+    // Get the next cluster in the chain
+    current_cluster = get_next_cluster(current_cluster);
   }
 
-  return false;
+  return false; // File not found
 }
 
 void FAT32::list_directory(uint32_t dir_cluster) {

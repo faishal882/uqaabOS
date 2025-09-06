@@ -203,8 +203,20 @@ bool FAT32::read_cluster(uint32_t cluster, uint8_t* buffer) {
     return true;
 }
 
+int FAT32::strncasecmp(const char* str1, const char* str2, uint32_t n) {
+    for (uint32_t i = 0; i < n; i++) {
+        char c1 = str1[i];
+        char c2 = str2[i];
+        if (c1 >= 'a' && c1 <= 'z') c1 -= 32;
+        if (c2 >= 'a' && c2 <= 'z') c2 -= 32;
+        if (c1 != c2) return c1 - c2;
+        if (c1 == '\0') return 0;
+    }
+    return 0;
+}
+
 // Helper function for case-insensitive string comparison
-bool FAT32::strcasecmp(const char* str1, const char* str2) {
+int FAT32::strcasecmp(const char* str1, const char* str2) {
     while (*str1 && *str2) {
         char c1 = *str1;
         char c2 = *str2;
@@ -213,13 +225,13 @@ bool FAT32::strcasecmp(const char* str1, const char* str2) {
         if (c1 >= 'A' && c1 <= 'Z') c1 = c1 - 'A' + 'a';
         if (c2 >= 'A' && c2 <= 'Z') c2 = c2 - 'A' + 'a';
         
-        if (c1 != c2) return false;
+        if (c1 != c2) return c1 - c2;
         
         str1++;
         str2++;
     }
     
-    return *str1 == *str2; // Both should be null at the end
+    return *str1 - *str2; // Both should be null at the end
 }
 
 bool FAT32::find_file_in_root(const char* name, DirectoryEntryFat32* entry) {
@@ -284,7 +296,7 @@ bool FAT32::find_file_in_root(const char* name, DirectoryEntryFat32* entry) {
             entry_name[name_len] = '\0';
             
             // Compare with requested name (case insensitive comparison)
-            if (strcasecmp(entry_name, name)) {
+            if (strcasecmp(entry_name, name) == 0) {
                 *entry = dir_entry[i];
                 return true;
             }

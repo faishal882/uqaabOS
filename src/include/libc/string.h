@@ -12,6 +12,7 @@ int strcmp(const char* str1, const char* str2);
 int strncmp(const char* str1, const char* str2, uint32_t n);
 char* strncpy(char* dest, const char* src, uint32_t n);
 uint32_t strlen(const char* str);
+char* strchr(const char* str, int c);
 
 } // namespace libc
 } // namespace uqaabOS

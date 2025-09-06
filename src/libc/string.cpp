@@ -59,5 +59,14 @@ uint32_t strlen(const char* str) {
     return len;
 }
 
+char* strchr(const char* str, int c) {
+    while (*str != (char)c) {
+        if (!*str++) {
+            return 0;
+        }
+    }
+    return (char*)str;
+}
+
 } // namespace libc
 } // namespace uqaabOS
