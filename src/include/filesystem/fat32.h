@@ -13,6 +13,8 @@ namespace filesystem {
 
 // File descriptor structure
 struct FileDescriptor {
+    char name[256];
+    uint32_t parent_cluster;
     uint32_t first_cluster;
     uint32_t current_cluster;
     uint32_t current_sector_in_cluster;

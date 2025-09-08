@@ -396,6 +396,8 @@ int FAT32::open(const char* path) {
     }
     
     // Initialize the file descriptor
+    libc::strncpy(file_descriptors[fd].name, filename, 256);
+    file_descriptors[fd].parent_cluster = dir_cluster;
     file_descriptors[fd].first_cluster = ((uint32_t)entry.first_cluster_hi << 16) | 
                                          ((uint32_t)entry.first_cluster_low);
     file_descriptors[fd].current_cluster = file_descriptors[fd].first_cluster;
@@ -674,6 +676,18 @@ int FAT32::write(int fd, uint8_t* buf, uint32_t size) {
             file->first_cluster = new_cluster;
             file->current_cluster = new_cluster;
             file->current_sector_in_cluster = 0;
+
+            // Update directory entry
+            DirectoryEntryFat32 entry;
+            uint32_t entry_cluster, entry_offset;
+            if (find_file_in_directory(file->parent_cluster, file->name, &entry, &entry_cluster, &entry_offset)) {
+                entry.first_cluster_hi = (new_cluster >> 16) & 0xFFFF;
+                entry.first_cluster_low = new_cluster & 0xFFFF;
+                uint8_t sector_buffer[512];
+                read_sector(cluster_to_lba(entry_cluster) + (entry_offset / 512), sector_buffer);
+                *((DirectoryEntryFat32*)(sector_buffer + (entry_offset % 512))) = entry;
+                write_sector(cluster_to_lba(entry_cluster) + (entry_offset / 512), sector_buffer);
+            }
         }
         
         // If we're at the end of the current cluster, allocate a new one
@@ -744,6 +758,17 @@ int FAT32::write(int fd, uint8_t* buf, uint32_t size) {
             file->size = file->position;
         }
         
+        // Update directory entry
+        DirectoryEntryFat32 entry;
+        uint32_t entry_cluster, entry_offset;
+        if (find_file_in_directory(file->parent_cluster, file_descriptors[fd].name, &entry, &entry_cluster, &entry_offset)) {
+            entry.size = file->size;
+            uint8_t sector_buffer[512];
+            read_sector(cluster_to_lba(entry_cluster) + (entry_offset / 512), sector_buffer);
+            *((DirectoryEntryFat32*)(sector_buffer + (entry_offset % 512))) = entry;
+            write_sector(cluster_to_lba(entry_cluster) + (entry_offset / 512), sector_buffer);
+        }
+
         // Update sector tracking
         file->current_sector_in_cluster = (file->position / 512) % bpb.sector_per_cluster;
     }
