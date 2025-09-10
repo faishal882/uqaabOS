@@ -7,8 +7,8 @@ build/
 iso/boot/kernel.bin
 
 # virtual storage disks
-hdd.img
-*.img
+# hdd.img is tracked (remove from ignore)
+# *.img  (we'll be more specific)
 
 # logs
 qemu.log
