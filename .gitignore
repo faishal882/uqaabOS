@@ -1,4 +1,9 @@
+# build directory
 build/
+# but track these specific files in build
+!build/*.iso
+!build/*.bin
+
 iso/boot/kernel.bin
 
 # virtual storage disks
