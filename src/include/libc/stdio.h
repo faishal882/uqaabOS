@@ -15,6 +15,7 @@ namespace uqaabOS
     void printf(const char *, ...);
     void init_cursor();
     void move_cursor(int dx, int dy);
+    void clear_screen();
   } // namespace libc
 
 } // namespace uqaabOS

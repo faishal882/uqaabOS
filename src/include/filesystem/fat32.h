@@ -13,6 +13,8 @@ namespace filesystem {
 
 // File descriptor structure
 struct FileDescriptor {
+    char name[256];
+    uint32_t parent_cluster;
     uint32_t first_cluster;
     uint32_t current_cluster;
     uint32_t current_sector_in_cluster;
@@ -44,7 +46,8 @@ private:
     bool find_file_in_root(const char* name, DirectoryEntryFat32* entry);
     uint32_t cluster_to_lba(uint32_t cluster);
     bool read_sector(uint32_t lba, uint8_t* buffer);
-    bool strcasecmp(const char* str1, const char* str2); // Case-insensitive string comparison
+    int strcasecmp(const char* str1, const char* str2); // Case-insensitive string comparison
+    int strncasecmp(const char* str1, const char* str2, uint32_t n); // Case-insensitive string comparison
     
     // New helper methods for write operations
     bool write_sector(uint32_t lba, uint8_t* buffer);

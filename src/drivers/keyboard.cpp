@@ -199,7 +199,7 @@ uint32_t KeyboardDriver::handle_interrupt(uint32_t esp) {
       handler->on_key_down('.');
       break;
     case 0x35:
-      handler->on_key_down('-');
+      handler->on_key_down('/');
       break;
 
     case 0x1C:

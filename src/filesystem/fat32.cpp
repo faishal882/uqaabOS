@@ -203,8 +203,20 @@ bool FAT32::read_cluster(uint32_t cluster, uint8_t* buffer) {
     return true;
 }
 
+int FAT32::strncasecmp(const char* str1, const char* str2, uint32_t n) {
+    for (uint32_t i = 0; i < n; i++) {
+        char c1 = str1[i];
+        char c2 = str2[i];
+        if (c1 >= 'a' && c1 <= 'z') c1 -= 32;
+        if (c2 >= 'a' && c2 <= 'z') c2 -= 32;
+        if (c1 != c2) return c1 - c2;
+        if (c1 == '\0') return 0;
+    }
+    return 0;
+}
+
 // Helper function for case-insensitive string comparison
-bool FAT32::strcasecmp(const char* str1, const char* str2) {
+int FAT32::strcasecmp(const char* str1, const char* str2) {
     while (*str1 && *str2) {
         char c1 = *str1;
         char c2 = *str2;
@@ -213,13 +225,13 @@ bool FAT32::strcasecmp(const char* str1, const char* str2) {
         if (c1 >= 'A' && c1 <= 'Z') c1 = c1 - 'A' + 'a';
         if (c2 >= 'A' && c2 <= 'Z') c2 = c2 - 'A' + 'a';
         
-        if (c1 != c2) return false;
+        if (c1 != c2) return c1 - c2;
         
         str1++;
         str2++;
     }
     
-    return *str1 == *str2; // Both should be null at the end
+    return *str1 - *str2; // Both should be null at the end
 }
 
 bool FAT32::find_file_in_root(const char* name, DirectoryEntryFat32* entry) {
@@ -229,7 +241,7 @@ bool FAT32::find_file_in_root(const char* name, DirectoryEntryFat32* entry) {
     }
     
     // Buffer to hold directory cluster data
-    uint8_t buffer[512 * 32]; // Assuming max 32 sectors per cluster
+    uint8_t* buffer = new uint8_t[512 * 32]; // Assuming max 32 sectors per cluster
     
     // Start with the root cluster
     uint32_t current_cluster = root_cluster;
@@ -284,8 +296,9 @@ bool FAT32::find_file_in_root(const char* name, DirectoryEntryFat32* entry) {
             entry_name[name_len] = '\0';
             
             // Compare with requested name (case insensitive comparison)
-            if (strcasecmp(entry_name, name)) {
+            if (strcasecmp(entry_name, name) == 0) {
                 *entry = dir_entry[i];
+                delete[] buffer;
                 return true;
             }
         }
@@ -296,12 +309,14 @@ bool FAT32::find_file_in_root(const char* name, DirectoryEntryFat32* entry) {
         // Check for invalid cluster chain
         if (next_cluster == 0xFFFFFFFF) {
             libc::printf("Error: Invalid cluster chain in root directory\n");
+            delete[] buffer;
             return false;
         }
         
         current_cluster = next_cluster;
     }
     
+    delete[] buffer;
     return false;
 }
 
@@ -381,6 +396,8 @@ int FAT32::open(const char* path) {
     }
     
     // Initialize the file descriptor
+    libc::strncpy(file_descriptors[fd].name, filename, 256);
+    file_descriptors[fd].parent_cluster = dir_cluster;
     file_descriptors[fd].first_cluster = ((uint32_t)entry.first_cluster_hi << 16) | 
                                          ((uint32_t)entry.first_cluster_low);
     file_descriptors[fd].current_cluster = file_descriptors[fd].first_cluster;
@@ -499,7 +516,7 @@ void FAT32::close(int fd) {
 
 void FAT32::list_root() {
     // Buffer to hold directory cluster data
-    uint8_t buffer[512 * 32]; // Assuming max 32 sectors per cluster
+    uint8_t* buffer = new uint8_t[512 * 32]; // Assuming max 32 sectors per cluster
     
     // Start with the root cluster
     uint32_t current_cluster = root_cluster;
@@ -510,6 +527,7 @@ void FAT32::list_root() {
         // Read the current cluster
         if (!read_cluster(current_cluster, buffer)) {
             libc::printf("Error: Failed to read root directory cluster\n");
+            delete[] buffer;
             return;
         }
         
@@ -610,6 +628,7 @@ void FAT32::list_root() {
     if (directory_empty) {
         libc::printf("Root directory is empty\n");
     }
+    delete[] buffer;
 }
 
 // write(): Writes data to a file
@@ -657,6 +676,18 @@ int FAT32::write(int fd, uint8_t* buf, uint32_t size) {
             file->first_cluster = new_cluster;
             file->current_cluster = new_cluster;
             file->current_sector_in_cluster = 0;
+
+            // Update directory entry
+            DirectoryEntryFat32 entry;
+            uint32_t entry_cluster, entry_offset;
+            if (find_file_in_directory(file->parent_cluster, file->name, &entry, &entry_cluster, &entry_offset)) {
+                entry.first_cluster_hi = (new_cluster >> 16) & 0xFFFF;
+                entry.first_cluster_low = new_cluster & 0xFFFF;
+                uint8_t sector_buffer[512];
+                read_sector(cluster_to_lba(entry_cluster) + (entry_offset / 512), sector_buffer);
+                *((DirectoryEntryFat32*)(sector_buffer + (entry_offset % 512))) = entry;
+                write_sector(cluster_to_lba(entry_cluster) + (entry_offset / 512), sector_buffer);
+            }
         }
         
         // If we're at the end of the current cluster, allocate a new one
@@ -727,6 +758,17 @@ int FAT32::write(int fd, uint8_t* buf, uint32_t size) {
             file->size = file->position;
         }
         
+        // Update directory entry
+        DirectoryEntryFat32 entry;
+        uint32_t entry_cluster, entry_offset;
+        if (find_file_in_directory(file->parent_cluster, file_descriptors[fd].name, &entry, &entry_cluster, &entry_offset)) {
+            entry.size = file->size;
+            uint8_t sector_buffer[512];
+            read_sector(cluster_to_lba(entry_cluster) + (entry_offset / 512), sector_buffer);
+            *((DirectoryEntryFat32*)(sector_buffer + (entry_offset % 512))) = entry;
+            write_sector(cluster_to_lba(entry_cluster) + (entry_offset / 512), sector_buffer);
+        }
+
         // Update sector tracking
         file->current_sector_in_cluster = (file->position / 512) % bpb.sector_per_cluster;
     }
