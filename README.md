@@ -1,8 +1,8 @@
 <h1 align="center">
     <picture>
-        <source media="(prefers-color-scheme: light)" srcset="assets/logo.png">
-        <source media="(prefers-color-scheme: dark)" srcset="assets/logo.png">
-        <img width="343" src="assets/logo.png" alt="UqaabOS">
+        <source media="(prefers-color-scheme: light)" srcset="assets/logo_2.png">
+        <source media="(prefers-color-scheme: dark)" srcset="assets/logo_2.png">
+        <img width="343" src="assets/logo_2.png" alt="UqaabOS">
     </picture>
 </h1>
 
@@ -40,7 +40,7 @@ UqaabOS is a foundational operating system developed entirely from scratch, adhe
 
 ## 🎬 Demo
 
-<video src="assets/demo_video.webm" width="800" controls autoplay loop muted>
+<video src="https://raw.githubusercontent.com/faishal882/uqaabOS/main/assets/demo_video.webm" width="800" controls autoplay loop muted>
 </video>
 
 ## 🛠️ Running UqaabOS
