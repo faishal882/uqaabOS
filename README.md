@@ -40,8 +40,7 @@ UqaabOS is a foundational operating system developed entirely from scratch, adhe
 
 ## 🎬 Demo
 
-<video src="https://raw.githubusercontent.com/faishal882/uqaabOS/main/assets/demo_video.webm" width="800" controls autoplay loop muted>
-</video>
+<img src="assets/demo_gif.gif" alt="uqaabOS Demo" width="800"/>
 
 ## 🛠️ Running UqaabOS
 
